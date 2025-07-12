@@ -204,13 +204,16 @@ class MailServiceFactory:
                 cmd.extend(["--listen", f"localhost:{web_port}"])
 
             # Start Mailpit in background with security measures
+            creation_flags = 0
+            if os.name == "nt":
+                # Use CREATE_NEW_PROCESS_GROUP on Windows for proper process isolation
+                creation_flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+
             subprocess.Popen(  # nosec B603 - safe because we control the executable path and validate inputs
                 cmd,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
-                if os.name == "nt"
-                else 0,
+                creationflags=creation_flags,
                 cwd=os.path.dirname(mailpit_path),  # Set working directory for safety
             )
 
