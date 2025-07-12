@@ -7,6 +7,7 @@ from werkzeug.wrappers import Response
 from src.wichteln.main import SecretSanta
 from src.wichteln.forms import (
     ParticipantForm,
+    ParticipantRemoveForm,
     AssignmentConfirmForm,
     validate_form_data,
 )
@@ -256,7 +257,7 @@ def assign_and_send_confirmation() -> Response:
     # Assuming the first participant added is the creator for now.
     # In a real app, you'd have a dedicated creator input.
     creator_email = (
-        game.participants[0]["email"]
+        str(game.participants[0]["email"])
         if game.participants
         else app.config["MAIL_DEFAULT_SENDER"]
     )
@@ -317,7 +318,7 @@ def confirm_assignments(token: str) -> Response:
                 body = f"""Hello {giver},
 
 You are the Secret Santa for: {receiver}!"""
-                send_email(giver_email, subject, body)
+                send_email(str(giver_email), subject, body)
         flash("Secret Santa assignments have been sent!", "success")
         game.assignments = (
             assignments_to_send  # Update game's assignments after sending
@@ -341,6 +342,55 @@ def reset() -> Response:
     game.reset()
     pending_assignments.clear()  # Clear pending assignments on reset
     flash("Game has been reset.", "info")
+    return redirect(url_for("index"))
+
+
+@app.route("/remove", methods=["POST"])
+def remove_participant() -> Response:
+    """
+    Removes a participant from the game after form validation.
+
+    Retrieves and validates participant name from the form submission using Pydantic.
+    If validation fails, appropriate flash messages are displayed.
+
+    Returns:
+        Response: A redirect to the index page.
+    """
+    try:
+        form_data = {
+            "name": request.form.get("name", "").strip(),
+        }
+
+        # Validate with Pydantic
+        participant_data, validation_errors = validate_form_data(
+            ParticipantRemoveForm, form_data
+        )
+
+        if validation_errors:
+            flash(f"Invalid input: {'; '.join(validation_errors)}", "error")
+            return redirect(url_for("index"))
+
+        # participant_data is guaranteed to be ParticipantRemoveForm instance here
+        if participant_data is None:
+            flash("An unexpected error occurred. Please try again.", "error")
+            return redirect(url_for("index"))
+
+        participant_form = cast(ParticipantRemoveForm, participant_data)
+
+        # Remove participant
+        success, message = game.remove_participant(participant_form.name)
+
+        if success:
+            print(f"DEBUG: Removed participant {participant_form.name}")
+            print(f"DEBUG: Total participants now: {len(game.participants)}")
+            flash(message, "success")
+        else:
+            flash(message, "error")
+
+    except Exception as e:
+        flash("An unexpected error occurred. Please try again.", "error")
+        print(f"Error in remove_participant: {e}")
+
     return redirect(url_for("index"))
 
 

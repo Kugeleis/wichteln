@@ -70,6 +70,35 @@ class AssignmentConfirmForm(BaseModel):
             raise ValueError("Invalid token format")
 
 
+class ParticipantRemoveForm(BaseModel):
+    """Form model for removing participants from the Secret Santa game."""
+
+    name: str = Field(
+        ..., min_length=1, max_length=50, description="Participant name to remove"
+    )
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        """Validate and sanitize participant name for removal."""
+        v = v.strip()
+
+        # Remove extra whitespace
+        v = re.sub(r"\s+", " ", v)
+
+        # Check for reasonable length after cleaning
+        if len(v) < 1:
+            raise ValueError("Name cannot be empty")
+
+        # Check for valid characters (letters, numbers, spaces, hyphens, apostrophes)
+        if not re.match(r"^[a-zA-Z0-9\s\-']+$", v):
+            raise ValueError(
+                "Name can only contain letters, numbers, spaces, hyphens, and apostrophes"
+            )
+
+        return v
+
+
 def validate_form_data(
     form_class: type[BaseModel], form_data: dict
 ) -> tuple[Optional[BaseModel], list[str]]:

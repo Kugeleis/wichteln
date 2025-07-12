@@ -15,12 +15,12 @@ class SecretSanta:
         Initializes a new Secret Santa game.
 
         Attributes:
-            participants (list[dict[str, str]]): A list of dictionaries, where each dictionary represents a participant
-                                                and contains their 'name' and 'email'.
+            participants (list[dict[str, str | bool]]): A list of dictionaries, where each dictionary represents a participant
+                                                and contains their 'name', 'email', and 'is_admin'.
             participant_emails (dict[str, str]): A dictionary mapping participant names to their email addresses.
             assignments (dict[str, str]): A dictionary mapping giver names to receiver names after assignments are made.
         """
-        self.participants: list[dict[str, str]] = []
+        self.participants: list[dict[str, str | bool]] = []
         self.participant_emails: dict[str, str] = {}
         self.assignments: dict[str, str] = {}
 
@@ -49,9 +49,13 @@ class SecretSanta:
             return False, f"A participant with the email '{email}' was already added."
 
         # If we get here, both name and email are unique
-        self.participants.append({"name": name, "email": email})
+        # The first participant becomes the administrator
+        is_admin = len(self.participants) == 0
+        self.participants.append({"name": name, "email": email, "is_admin": is_admin})
         self.participant_emails[name] = email
-        return True, f"Successfully added {name}!"
+
+        admin_msg = " (Administrator)" if is_admin else ""
+        return True, f"Successfully added {name}{admin_msg}!"
 
     def assign_santas(self) -> None:
         """
@@ -63,7 +67,7 @@ class SecretSanta:
             return
 
         # Extract only names for shuffling
-        participant_names = [p["name"] for p in self.participants]
+        participant_names = [str(p["name"]) for p in self.participants]
         shuffled_participants = random.sample(participant_names, len(participant_names))
 
         self.assignments = {
@@ -80,6 +84,37 @@ class SecretSanta:
         """
         self.participants = []
         self.participant_emails = {}
+
+    def remove_participant(self, name: str) -> tuple[bool, str]:
+        """
+        Removes a participant from the game by name.
+
+        Args:
+            name (str): The name of the participant to remove.
+
+        Returns:
+            tuple[bool, str]: A tuple containing success status and message.
+                             (True, "Success message") if removed successfully,
+                             (False, "Error message") if removal failed.
+        """
+        if not name:
+            return False, "Name is required."
+
+        # Check if participant exists
+        if name not in self.participant_emails:
+            return False, f"Participant '{name}' not found."
+
+        # Remove from participants list
+        self.participants = [p for p in self.participants if str(p["name"]) != name]
+
+        # Remove from participant_emails dict
+        del self.participant_emails[name]
+
+        # Clear assignments if they exist (assignments become invalid when participants change)
+        if self.assignments:
+            self.assignments = {}
+
+        return True, f"Successfully removed {name}!"
 
     def reset(self) -> None:
         """
