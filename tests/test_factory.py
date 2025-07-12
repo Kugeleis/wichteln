@@ -1,25 +1,126 @@
 """
-Additional tests to improve code coverage.
+Tests for src/mail_service/factory.py.
 
-This module provides tests for edge cases and error conditions that were
-identified as missing from the coverage report.
+This module provides comprehensive tests for the MailServiceFactory class,
+including service creation, Mailpit management, and environment detection.
 """
 
 from unittest.mock import Mock, patch
 import pytest
-from flask import Flask
 
 from src.mail_service import (
     MailServiceFactory,
-    EmailMessage,
     MailpitMailService,
     SMTPMailService,
 )
 
 
-class TestFactoryEdgeCases:
-    """Test factory edge cases and error conditions."""
+class TestMailServiceFactory:
+    """Test MailServiceFactory class."""
 
+    @pytest.fixture
+    def mock_flask_app(self) -> Mock:
+        """Create a mock Flask application."""
+        app = Mock()
+        app.config = {}
+        app.debug = False
+        app.testing = False
+        app.extensions = {}  # Add extensions attribute for Flask-Mail
+        return app
+
+    def test_create_mail_service_defaults_to_mailpit_in_development(
+        self, mock_flask_app: Mock
+    ) -> None:
+        """Test that factory creates Mailpit service by default in development."""
+        with (
+            patch.dict("os.environ", {"FLASK_ENV": "development"}),
+            patch.object(MailpitMailService, "is_available", return_value=True),
+        ):
+            service = MailServiceFactory.create_mail_service(app=mock_flask_app)
+
+            assert isinstance(service, MailpitMailService)
+
+    def test_create_mail_service_with_force_type_smtp(
+        self, mock_flask_app: Mock
+    ) -> None:
+        """Test that factory creates SMTP service when forced."""
+        service = MailServiceFactory.create_mail_service(
+            app=mock_flask_app, force_type="smtp"
+        )
+
+        assert isinstance(service, SMTPMailService)
+
+    def test_create_mail_service_with_force_type_mailpit(self) -> None:
+        """Test that factory creates Mailpit service when forced."""
+        service = MailServiceFactory.create_mail_service(force_type="mailpit")
+
+        assert isinstance(service, MailpitMailService)
+
+    def test_get_service_creates_factory_and_returns_service(self) -> None:
+        """Test that get_service method works as expected."""
+        factory = MailServiceFactory()
+
+        with patch.object(MailServiceFactory, "create_mail_service") as mock_create:
+            mock_service = Mock()
+            mock_create.return_value = mock_service
+
+            result = factory.get_service()
+
+            assert result == mock_service
+            mock_create.assert_called_once()
+
+    def test_get_available_services_returns_service_info(self) -> None:
+        """Test that get_available_services returns proper service information."""
+        services = MailServiceFactory.get_available_services()
+
+        assert "mailpit" in services
+        assert "smtp" in services
+        assert services["mailpit"]["name"] == "Mailpit"
+        assert services["smtp"]["name"] == "SMTP Server"
+
+    @patch("os.path.exists")
+    @patch("subprocess.Popen")
+    @patch("time.sleep")
+    def test_start_mailpit_with_existing_executable_succeeds(
+        self, mock_sleep: Mock, mock_popen: Mock, mock_exists: Mock
+    ) -> None:
+        """Test that start_mailpit succeeds when executable exists."""
+        # Setup mocks
+        mock_exists.return_value = True
+        mock_service = Mock()
+        mock_service.is_available.side_effect = [
+            False,
+            True,
+        ]  # First check fails, then succeeds after start
+        mock_service.get_status.return_value = {
+            "host": "localhost",
+            "smtp_port": 1025,
+            "web_ui": "http://localhost:8025",
+        }
+
+        with (
+            patch.object(
+                MailServiceFactory, "_create_mailpit_service", return_value=mock_service
+            ),
+            patch("builtins.print"),
+        ):
+            result = MailServiceFactory.start_mailpit()
+
+            assert result is True
+            mock_popen.assert_called_once()
+
+    @patch("os.path.exists")
+    def test_start_mailpit_with_missing_executable_fails(
+        self, mock_exists: Mock
+    ) -> None:
+        """Test that start_mailpit fails when executable is missing."""
+        mock_exists.return_value = False
+
+        result = MailServiceFactory.start_mailpit()
+
+        assert result is False
+
+    # Coverage improvement tests from test_final_coverage.py and test_coverage_improvements.py
     def test_create_mailpit_service_when_mailpit_not_available(self) -> None:
         """Test factory behavior when Mailpit is not available."""
         with (
@@ -146,6 +247,47 @@ class TestFactoryEdgeCases:
             result = MailServiceFactory.start_mailpit()
             assert result is True
 
+    def test_factory_print_statements_in_start_mailpit(self) -> None:
+        """Test the print statements in start_mailpit method."""
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("subprocess.Popen"),
+            patch.object(MailServiceFactory, "_create_mailpit_service") as mock_create,
+            patch("time.sleep"),
+            patch("builtins.print") as mock_print,
+        ):
+            # Mock service that will fail after startup
+            mock_service = Mock()
+            mock_service.is_available.side_effect = [
+                False,
+                False,
+            ]  # Never becomes available
+            mock_create.return_value = mock_service
+
+            result = MailServiceFactory.start_mailpit()
+            assert result is False
+
+            # Check that the "failed to start" message was printed (lines 230-231)
+            mock_print.assert_any_call("❌ Mailpit failed to start")
+
+    def test_factory_exception_handling_in_start_mailpit(self) -> None:
+        """Test exception handling in start_mailpit."""
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("subprocess.Popen", side_effect=FileNotFoundError("File not found")),
+            patch.object(MailServiceFactory, "_create_mailpit_service") as mock_create,
+            patch("builtins.print") as mock_print,
+        ):
+            mock_service = Mock()
+            mock_service.is_available.return_value = False
+            mock_create.return_value = mock_service
+
+            result = MailServiceFactory.start_mailpit()
+            assert result is False
+
+            # Check that the exception message was printed
+            mock_print.assert_any_call("❌ Failed to start Mailpit: File not found")
+
     def test_get_available_services_coverage(self) -> None:
         """Test get_available_services method coverage."""
         services = MailServiceFactory.get_available_services()
@@ -154,106 +296,6 @@ class TestFactoryEdgeCases:
         assert isinstance(services, dict)
         assert "mailpit" in services
         assert "smtp" in services
-
-
-class TestSMTPServiceEdgeCases:
-    """Test SMTP service edge cases and error conditions."""
-
-    def test_smtp_service_error_handling_in_send_email(self) -> None:
-        """Test SMTP service error handling when sending fails."""
-        app = Flask(__name__)
-        service = SMTPMailService(app=app, server="smtp.example.com", port=587)
-
-        # Mock the mail.send to raise an exception
-        with patch.object(service.mail, "send", side_effect=Exception("SMTP Error")):
-            message = EmailMessage(
-                subject="Test", recipient="test@example.com", body="Test body"
-            )
-
-            result = service.send_email(message)
-            assert result is False
-
-    def test_smtp_is_available_missing_auth_credentials(self) -> None:
-        """Test is_available when authentication credentials are missing."""
-        service = SMTPMailService(
-            server="smtp.gmail.com",
-            port=587,
-            use_tls=True,
-            # Missing username and password
-        )
-        service.mail = Mock()  # Mock that service is initialized
-
-        result = service.is_available()
-        assert result is False
-
-    def test_smtp_get_status_missing_credentials_message(self) -> None:
-        """Test get_status returns correct message for missing credentials."""
-        service = SMTPMailService(
-            server="smtp.gmail.com",
-            port=587,
-            use_tls=True,
-            # Missing username and password
-        )
-        service.mail = Mock()  # Mock that service is initialized
-
-        status = service.get_status()
-        assert status["status_message"] == "Missing authentication credentials"
-
-    def test_smtp_get_status_configuration_incomplete(self) -> None:
-        """Test get_status when configuration is incomplete."""
-        service = SMTPMailService(
-            server="smtp.gmail.com",
-            port=587,
-            username="user@example.com",
-            password="password",
-        )
-        service.mail = Mock()
-
-        # Mock is_available to return False for incomplete config
-        with patch.object(service, "is_available", return_value=False):
-            status = service.get_status()
-            assert status["status_message"] == "Configuration incomplete"
-
-
-class TestProtocolAbstractMethods:
-    """Test protocol abstract methods for coverage."""
-
-    def test_mail_protocol_abstract_methods_coverage(self) -> None:
-        """Test that abstract methods are properly defined."""
-        from src.mail_service.protocol import MailProtocol
-
-        # Verify that the protocol has the expected abstract methods
-        assert hasattr(MailProtocol, "send_email")
-        assert hasattr(MailProtocol, "is_available")
-        assert hasattr(MailProtocol, "get_status")
-        assert hasattr(MailProtocol, "get_service_info")
-
-        # Verify it's an abstract class that can't be instantiated
-        try:
-            MailProtocol()  # type: ignore[abstract]
-            pytest.fail("Should not be able to instantiate abstract class")
-        except TypeError as e:
-            assert "abstract class" in str(e)
-
-
-class TestEmailMessageValidation:
-    """Test EmailMessage edge cases."""
-
-    def test_email_message_with_recipients_list(self) -> None:
-        """Test EmailMessage with recipients list property."""
-        message = EmailMessage(
-            subject="Test", recipient="test@example.com", body="Test body"
-        )
-
-        # Test that recipients property works (used in some implementations)
-        recipients = getattr(message, "recipients", None)
-        # The property might not exist, which is fine
-        if recipients is not None:
-            assert isinstance(recipients, list)
-
-
-class TestIntegrationEdgeCases:
-    """Test integration scenarios and edge cases."""
 
     def test_factory_with_different_environments(self) -> None:
         """Test factory behavior in different environment configurations."""
@@ -282,17 +324,6 @@ class TestIntegrationEdgeCases:
 
             mock_create.assert_called_once_with(app=None, force_type="mailpit")
             assert result == mock_service
-
-    def test_email_message_string_representation(self) -> None:
-        """Test EmailMessage string representation."""
-        message = EmailMessage(
-            subject="Test Subject", recipient="test@example.com", body="Test body"
-        )
-
-        # Test that the object can be converted to string (for debugging)
-        str_repr = str(message)
-        assert "Test Subject" in str_repr
-        assert "test@example.com" in str_repr
 
 
 if __name__ == "__main__":
