@@ -2,6 +2,17 @@
 
 <!-- version list -->
 
+## v0.6.0 (2025-07-12)
+
+### Features
+
+- Add participant removal functionality with validation and admin indication
+  ([`74303e2`](https://github.com/Kugeleis/wichteln/commit/74303e260f7b9273d7ee72aaf412b73815015dd9))
+
+- Refactor application structure to use a complete app factory and modular design
+  ([`c9db243`](https://github.com/Kugeleis/wichteln/commit/c9db2438e27e52b593af87a22a74192b058bb2fc))
+
+
 ## v0.5.0 (2025-07-12)
 
 ### Chores
