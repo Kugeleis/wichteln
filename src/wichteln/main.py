@@ -14,18 +14,21 @@ class SecretSanta:
         """
         Initializes a new Secret Santa game.
         """
-        self.participants: List[str] = []
+        self.participants: List[Dict[str, str]] = []
+        self.participant_emails: Dict[str, str] = {}
         self.assignments: Dict[str, str] = {}
 
-    def add_participant(self, name: str) -> None:
+    def add_participant(self, name: str, email: str) -> None:
         """
         Adds a participant to the game.
 
         Args:
             name: The name of the participant to add.
+            email: The email address of the participant.
         """
-        if name and name not in self.participants:
-            self.participants.append(name)
+        if name and email and name not in self.participant_emails and email not in self.participant_emails.values():
+            self.participants.append({'name': name, 'email': email})
+            self.participant_emails[name] = email
 
     def assign_santas(self) -> None:
         """
@@ -34,7 +37,10 @@ class SecretSanta:
         if len(self.participants) < 2:
             return
 
-        shuffled_participants = random.sample(self.participants, len(self.participants))
+        # Extract only names for shuffling
+        participant_names = [p['name'] for p in self.participants]
+        shuffled_participants = random.sample(participant_names, len(participant_names))
+
         self.assignments = {
             giver: shuffled_participants[(i + 1) % len(shuffled_participants)]
             for i, giver in enumerate(shuffled_participants)
@@ -46,3 +52,4 @@ class SecretSanta:
         """
         self.participants = []
         self.assignments = {}
+        self.participant_emails = {}

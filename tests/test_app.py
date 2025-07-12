@@ -3,7 +3,8 @@ This module contains tests for the Flask application.
 """
 
 import pytest
-from app import app, game
+from app import app, game, mail, pending_assignments, send_email, verify_recaptcha
+from unittest.mock import patch
 
 @pytest.fixture
 def client():
@@ -11,15 +12,29 @@ def client():
     Creates a test client for the Flask application.
     """
     app.config['TESTING'] = True
+    app.config['MAIL_SUPPRESS_SEND'] = True  # Suppress actual email sending during tests
     with app.test_client() as client:
-        yield client
+        with app.app_context():
+            yield client
 
 @pytest.fixture(autouse=True)
-def reset_game():
+def reset_game_and_pending_assignments():
     """
-    Resets the game state before each test.
+    Resets the game state and pending assignments before each test.
     """
     game.reset()
+    pending_assignments.clear()
+
+@pytest.fixture
+def mock_send_email():
+    with patch('app.send_email') as mock_send:
+        yield mock_send
+
+@pytest.fixture
+def mock_verify_recaptcha():
+    with patch('app.verify_recaptcha') as mock_verify:
+        mock_verify.return_value = True  # By default, assume reCAPTCHA passes
+        yield mock_verify
 
 def test_index(client):
     """
@@ -29,29 +44,78 @@ def test_index(client):
     assert response.status_code == 200
     assert b'Secret Santa' in response.data
 
-def test_add_participant(client):
+def test_add_participant(client, mock_verify_recaptcha):
     """
-    Tests that a participant is added to the game.
+    Tests that a participant is added to the game with name and email.
     """
-    client.post('/add', data={'name': 'testuser'})
-    response = client.get('/')
-    assert b'testuser' in response.data
+    response = client.post('/add', data={'name': 'testuser', 'email': 'test@example.com', 'g-recaptcha-response': 'mock_token'})
+    assert response.status_code == 302 # Redirect to index
+    assert game.participants[0]['name'] == 'testuser'
+    assert game.participants[0]['email'] == 'test@example.com'
+    mock_verify_recaptcha.assert_called_once_with('mock_token')
 
-def test_assign(client):
+def test_add_participant_recaptcha_fail(client, mock_verify_recaptcha):
     """
-    Tests that Secret Santas are assigned correctly.
+    Tests that a participant is not added if reCAPTCHA fails.
     """
-    client.post('/add', data={'name': 'user1'})
-    client.post('/add', data={'name': 'user2'})
-    response = client.get('/assign', follow_redirects=True)
+    mock_verify_recaptcha.return_value = False
+    response = client.post('/add', data={'name': 'testuser', 'email': 'test@example.com', 'g-recaptcha-response': 'mock_token'})
+    assert response.status_code == 302 # Still redirects
+    assert not game.participants # Participant should not be added
+    with client.session_transaction() as sess:
+        assert b'CAPTCHA verification failed' in client.get('/').data
+
+def test_assign_and_send_confirmation(client, mock_send_email, mock_verify_recaptcha):
+    """
+    Tests that assign triggers a confirmation email.
+    """
+    client.post('/add', data={'name': 'user1', 'email': 'user1@example.com', 'g-recaptcha-response': 'mock_token'})
+    client.post('/add', data={'name': 'user2', 'email': 'user2@example.com', 'g-recaptcha-response': 'mock_token'})
+    
+    response = client.post('/assign', follow_redirects=True)
+    assert response.status_code == 200 # Redirects to index
+    mock_send_email.assert_called_once() # Confirmation email should be sent
+    assert len(pending_assignments) == 1 # Assignments should be pending
+    assert b'Confirmation email sent' in response.data
+
+def test_confirm_assignments(client, mock_send_email, mock_verify_recaptcha):
+    """
+    Tests that confirming assignments sends out emails to participants.
+    """
+    client.post('/add', data={'name': 'user1', 'email': 'user1@example.com', 'g-recaptcha-response': 'mock_token'})
+    client.post('/add', data={'name': 'user2', 'email': 'user2@example.com', 'g-recaptcha-response': 'mock_token'})
+    client.post('/assign') # This populates pending_assignments
+
+    # Get the token from pending_assignments (there should be only one)
+    token = list(pending_assignments.keys())[0]
+
+    response = client.get(f'/confirm/{token}', follow_redirects=True)
+    assert response.status_code == 200 # Redirects to results
+    assert not pending_assignments # Pending assignments should be cleared
+    assert mock_send_email.call_count == 3 # 1 confirmation + 2 participant emails
+    assert b'Secret Santa assignments have been sent!' in response.data
+
+def test_confirm_assignments_invalid_token(client):
+    """
+    Tests that an invalid token for confirmation is handled correctly.
+    """
+    response = client.get('/confirm/invalid_token', follow_redirects=True)
     assert response.status_code == 200
-    assert b'Secret Santa Assignments' in response.data
+    assert b'Invalid or expired confirmation link.' in response.data
 
-def test_reset(client):
+def test_reset(client, mock_verify_recaptcha):
     """
-    Tests that the game is reset correctly.
+    Tests that the game and pending assignments are reset correctly.
     """
-    client.post('/add', data={'name': 'testuser'})
-    client.post('/reset', follow_redirects=True)
-    response = client.get('/')
-    assert b'testuser' not in response.data
+    client.post('/add', data={'name': 'testuser', 'email': 'test@example.com', 'g-recaptcha-response': 'mock_token'})
+    client.post('/add', data={'name': 'user2', 'email': 'user2@example.com', 'g-recaptcha-response': 'mock_token'})
+    client.post('/assign')
+
+    assert len(game.participants) > 0
+    assert len(pending_assignments) > 0
+
+    response = client.post('/reset', follow_redirects=True)
+    assert response.status_code == 200
+    assert not game.participants
+    assert not pending_assignments
+    assert b'Game has been reset.' in response.data

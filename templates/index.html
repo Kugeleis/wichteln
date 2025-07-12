@@ -6,10 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secret Santa</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://www.google.com/recaptcha/api.js?render=YOUR_RECAPTCHA_SITE_KEY"></script>
+    <script>
+        grecaptcha.ready(function() {
+            grecaptcha.execute('YOUR_RECAPTCHA_SITE_KEY', {action: 'submit'}).then(function(token) {
+                document.getElementById('g-recaptcha-response').value = token;
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="container">
         <h1 class="mt-5">Secret Santa</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
         <div class="row">
             <div class="col-md-6">
                 <h2>Add Participant</h2>
@@ -17,6 +36,10 @@
                     <div class="form-group">
                         <input type="text" name="name" class="form-control" placeholder="Enter name" required>
                     </div>
+                    <div class="form-group">
+                        <input type="email" name="email" class="form-control" placeholder="Enter email" required>
+                    </div>
+                    <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
                     <button type="submit" class="btn btn-primary">Add</button>
                 </form>
             </div>
@@ -24,11 +47,13 @@
                 <h2>Participants</h2>
                 <ul class="list-group">
                     {% for participant in participants %}
-                        <li class="list-group-item">{{ participant }}</li>
+                        <li class="list-group-item">{{ participant.name }} ({{ participant.email }})</li>
                     {% endfor %}
                 </ul>
                 {% if participants|length > 1 %}
-                    <a href="/assign" class="btn btn-success mt-3">Assign Secret Santas</a>
+                    <form action="/assign" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-success mt-3">Assign Secret Santas</button>
+                    </form>
                 {% endif %}
                 <form action="/reset" method="post" class="d-inline">
                     <button type="submit" class="btn btn-danger mt-3">Reset</button>
