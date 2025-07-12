@@ -243,6 +243,7 @@ class TestSMTPMailService:
         app.config = {}
         app.debug = False
         app.testing = False
+        app.extensions = {}  # Add extensions attribute for Flask-Mail
         return app
 
     @pytest.fixture
@@ -354,13 +355,17 @@ class TestMailServiceFactory:
         app.config = {}
         app.debug = False
         app.testing = False
+        app.extensions = {}  # Add extensions attribute for Flask-Mail
         return app
 
     def test_create_mail_service_defaults_to_mailpit_in_development(
         self, mock_flask_app: Mock
     ) -> None:
         """Test that factory creates Mailpit service by default in development."""
-        with patch.dict("os.environ", {"FLASK_ENV": "development"}):
+        with (
+            patch.dict("os.environ", {"FLASK_ENV": "development"}),
+            patch.object(MailpitMailService, "is_available", return_value=True),
+        ):
             service = MailServiceFactory.create_mail_service(app=mock_flask_app)
 
             assert isinstance(service, MailpitMailService)
@@ -405,8 +410,9 @@ class TestMailServiceFactory:
 
     @patch("os.path.exists")
     @patch("subprocess.Popen")
+    @patch("time.sleep")
     def test_start_mailpit_with_existing_executable_succeeds(
-        self, mock_popen: Mock, mock_exists: Mock
+        self, mock_sleep: Mock, mock_popen: Mock, mock_exists: Mock
     ) -> None:
         """Test that start_mailpit succeeds when executable exists."""
         # Setup mocks
@@ -416,9 +422,17 @@ class TestMailServiceFactory:
             False,
             True,
         ]  # First check fails, then succeeds after start
+        mock_service.get_status.return_value = {
+            "host": "localhost",
+            "smtp_port": 1025,
+            "web_ui": "http://localhost:8025",
+        }
 
-        with patch.object(
-            MailServiceFactory, "_create_mailpit_service", return_value=mock_service
+        with (
+            patch.object(
+                MailServiceFactory, "_create_mailpit_service", return_value=mock_service
+            ),
+            patch("builtins.print"),
         ):
             result = MailServiceFactory.start_mailpit()
 
