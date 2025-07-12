@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.8.2 (2025-07-12)
+
+### Bug Fixes
+
+- Improve Mailpit process isolation on Windows
+  ([`f247988`](https://github.com/Kugeleis/wichteln/commit/f2479885cf1acba5f7bf350ac359627e664454a5))
+
+
 ## v0.8.1 (2025-07-12)
 
 ### Bug Fixes
