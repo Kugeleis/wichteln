@@ -1,0 +1,24 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Santa - Results</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Secret Santa Assignments</h1>
+        <ul class="list-group">
+            {% for giver, receiver in assignments.items() %}
+                <li class="list-group-item"><b>{{ giver }}</b> is the Secret Santa for <b>{{ receiver }}</b></li>
+            {% endfor %}
+        </ul>
+        <a href="/" class="btn btn-primary mt-3">Start Over</a>
+        <form action="/reset" method="post" class="d-inline">
+            <button type="submit" class="btn btn-danger mt-3">Reset</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+[project]
+name = "wichteln"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["flask", "pytest"]
+
+[project.scripts]
+wichteln = "wichteln.main:main"
+
+[tool.hatch.build.targets.sdist]
+packages = ["src/wichteln"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wichteln"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+    "ruff>=0.12.3",
+]
