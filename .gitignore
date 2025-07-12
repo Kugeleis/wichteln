@@ -11,3 +11,9 @@ wheels/
 mailpit/
 .coverage
 htmlcov/
+
+# Documentation build output
+site/
+
+# Auto-generated documentation files (optional - if you want to regenerate them)
+# docs/reference/

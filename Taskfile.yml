@@ -88,3 +88,41 @@ tasks:
       - del /s /q *.pyc || true
       - for /d %%i in (*.egg-info) do rmdir /s /q "%%i" || true
     silent: false
+
+  docs-generate:
+    desc: "Generates API documentation from source code."
+    cmds:
+      - echo "Generating API documentation..."
+      - uv run python scripts/generate_docs.py
+    silent: false
+
+  docs-serve:
+    desc: "Starts the documentation development server."
+    cmds:
+      - echo "Starting documentation server..."
+      - echo "Documentation will be available at http://localhost:8000"
+      - uv run mkdocs serve
+    silent: false
+
+  docs-build:
+    desc: "Builds the documentation site."
+    cmds:
+      - echo "Building documentation..."
+      - uv run mkdocs build
+    silent: false
+
+  docs-deploy:
+    desc: "Deploys documentation to GitHub Pages."
+    cmds:
+      - echo "Deploying documentation to GitHub Pages..."
+      - uv run mkdocs gh-deploy
+    silent: false
+
+  docs:
+    desc: "Generates and builds the complete documentation."
+    deps: [docs-generate]
+    cmds:
+      - task: docs-build
+      - echo "Documentation built successfully!"
+      - echo "View at ./site/index.html"
+    silent: false
