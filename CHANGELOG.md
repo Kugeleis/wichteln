@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.8.1 (2025-07-12)
+
+### Bug Fixes
+
+- Add toml
+  ([`24cea40`](https://github.com/Kugeleis/wichteln/commit/24cea40db05495892de5c3f2511521ce9be1ec61))
+
+
 ## v0.8.0 (2025-07-12)
 
 ### Features
