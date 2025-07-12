@@ -1,9 +1,37 @@
 version: '3'
 
 tasks:
-  run:
-    desc: "Starts the Flask development server."
+  dev:
+    desc: "Starts the Flask development server with Mailpit in development mode."
+    env:
+      FLASK_ENV: development
+      USE_MAILPIT: true
+      FLASK_DEBUG: true
     cmds:
+      - cmd: echo "🎄 Starting Wichteln Development Environment 🎄"
+      - cmd: echo "=================================================="
+      - cmd: echo "Setting up development environment..."
+      - cmd: echo "  FLASK_ENV development"
+      - cmd: echo "  USE_MAILPIT true"
+      - cmd: echo "  FLASK_DEBUG true"
+      - cmd: echo ""
+      - cmd: |
+          if (!(Test-Path "./mailpit/mailpit.exe")) {
+            Write-Host "❌ Mailpit executable not found at ./mailpit/mailpit.exe" -ForegroundColor Red
+            Write-Host "   Please download Mailpit from: https://github.com/axllent/mailpit/releases" -ForegroundColor Yellow
+            exit 1
+          } else {
+            Write-Host "✅ Mailpit executable found" -ForegroundColor Green
+          }
+        platforms: [windows]
+      - cmd: echo ""
+      - cmd: echo "🚀 Starting application..."
+      - cmd: echo "   📧 Mailpit will start automatically if not running"
+      - cmd: echo "   🌐 Mailpit Web UI at http://localhost:8025"
+      - cmd: echo "   🎯 Flask App at http://127.0.0.1:5000"
+      - cmd: echo ""
+      - cmd: echo "Press Ctrl+C to stop the application"
+      - cmd: echo ""
       - uv run python app.py
     silent: false
 

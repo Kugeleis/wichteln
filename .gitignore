@@ -10,3 +10,4 @@ wheels/
 .venv
 mailpit/
 .coverage
+htmlcov/

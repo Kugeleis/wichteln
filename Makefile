@@ -1,13 +1,34 @@
 PYTHON := .venv/Scripts/python.exe
 UV := .venv/Scripts/uv.exe
 
-.PHONY: all run test update publish clean version-minor version-patch
+.PHONY: all dev test update publish clean version-minor version-patch
 
-all: run
+all: dev
 
-run:
-	@echo "Starting Flask development server..."
-	@$(PYTHON) app.py
+dev:
+	@echo "🎄 Starting Wichteln Development Environment 🎄"
+	@echo "=================================================="
+	@echo "Setting up development environment..."
+	@echo "  FLASK_ENV: development"
+	@echo "  USE_MAILPIT: true"
+	@echo "  FLASK_DEBUG: true"
+	@echo ""
+	@if not exist ".\mailpit\mailpit.exe" ( \
+		echo "❌ Mailpit executable not found at .\mailpit\mailpit.exe" && \
+		echo "   Please download Mailpit from: https://github.com/axllent/mailpit/releases" && \
+		exit /b 1 \
+	) else ( \
+		echo "✅ Mailpit executable found" \
+	)
+	@echo ""
+	@echo "🚀 Starting application..."
+	@echo "   📧 Mailpit will start automatically if not running"
+	@echo "   🌐 Mailpit Web UI: http://localhost:8025"
+	@echo "   🎯 Flask App: http://127.0.0.1:5000"
+	@echo ""
+	@echo "Press Ctrl+C to stop the application"
+	@echo ""
+	@set FLASK_ENV=development && set USE_MAILPIT=true && set FLASK_DEBUG=true && $(PYTHON) app.py
 
 test:
 	@echo "Running tests..."
