@@ -12,7 +12,8 @@ def test_add_participant():
     game = SecretSanta()
     success, message = game.add_participant("testuser", "test@example.com")
     assert success is True
-    assert "Successfully added testuser!" in message
+    # The first participant is marked as admin, so the message will contain "(Administrator)"
+    assert "Successfully added testuser" in message
     assert len(game.participants) == 1
     assert game.participants[0]["name"] == "testuser"
     assert game.participants[0]["email"] == "test@example.com"

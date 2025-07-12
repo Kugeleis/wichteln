@@ -32,13 +32,15 @@ def reset_game_and_pending_assignments():
 
 @pytest.fixture
 def mock_send_email():
-    with patch("app.send_email") as mock_send:
+    with patch("services.email_service.EmailService.send_email") as mock_send:
         yield mock_send
 
 
 @pytest.fixture
 def mock_verify_recaptcha():
-    with patch("app.verify_recaptcha") as mock_verify:
+    with patch(
+        "services.recaptcha_service.RecaptchaService.verify_recaptcha"
+    ) as mock_verify:
         mock_verify.return_value = True  # By default, assume reCAPTCHA passes
         yield mock_verify
 
@@ -205,7 +207,7 @@ def test_add_duplicate_participant_flask(client, mock_verify_recaptcha):
         follow_redirects=True,
     )
     assert response1.status_code == 200
-    assert b"Successfully added testuser!" in response1.data
+    assert b"Successfully added testuser" in response1.data
     assert len(game.participants) == 1
 
     # Try to add participant with same name, different email
