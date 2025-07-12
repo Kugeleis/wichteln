@@ -322,6 +322,8 @@ You are the Secret Santa for: {receiver}!"""
         game.assignments = (
             assignments_to_send  # Update game's assignments after sending
         )
+        # Clear participants list after successful assignment sending to maintain secrecy
+        game.clear_participants()
     else:
         flash("Invalid or expired confirmation link.", "error")
 

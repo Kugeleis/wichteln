@@ -71,6 +71,16 @@ class SecretSanta:
             for i, giver in enumerate(shuffled_participants)
         }
 
+    def clear_participants(self) -> None:
+        """
+        Clears participants list while keeping assignments intact.
+
+        This is useful after assignments have been sent to maintain secrecy
+        while preserving the record that assignments were made.
+        """
+        self.participants = []
+        self.participant_emails = {}
+
     def reset(self) -> None:
         """
         Resets the game to its initial state, clearing all participants and assignments.

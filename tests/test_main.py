@@ -142,3 +142,29 @@ def test_reset_clears_all_data():
     assert game.participants == []
     assert game.assignments == {}
     assert game.participant_emails == {}
+
+
+def test_clear_participants():
+    """Test that clear_participants() clears participants but keeps assignments."""
+    game = SecretSanta()
+
+    # Add some participants
+    game.add_participant("Alice", "alice@example.com")
+    game.add_participant("Bob", "bob@example.com")
+
+    # Assign participants
+    game.assign_santas()
+
+    # Verify initial state
+    assert len(game.participants) == 2
+    assert len(game.assignments) == 2
+    assert len(game.participant_emails) == 2
+
+    # Clear participants only
+    game.clear_participants()
+
+    # Verify participants are cleared but assignments remain
+    assert game.participants == []
+    assert game.participant_emails == {}
+    assert len(game.assignments) == 2  # Assignments should remain
+    assert "Alice" in game.assignments or "Bob" in game.assignments

@@ -241,3 +241,48 @@ def test_add_duplicate_participant_flask(client, mock_verify_recaptcha):
         in response3.data
     )
     assert len(game.participants) == 1  # Should still be 1
+
+
+def test_confirm_assignments_clears_participants(
+    client, mock_send_email, mock_verify_recaptcha
+):
+    """
+    Tests that participants are cleared after successful assignment confirmation to maintain secrecy.
+    """
+    # Add participants
+    client.post(
+        "/add",
+        data={
+            "name": "user1",
+            "email": "user1@example.com",
+            "g-recaptcha-response": "mock_token",
+        },
+    )
+    client.post(
+        "/add",
+        data={
+            "name": "user2",
+            "email": "user2@example.com",
+            "g-recaptcha-response": "mock_token",
+        },
+    )
+
+    # Verify participants exist before assignment
+    assert len(game.participants) == 2
+    assert len(game.participant_emails) == 2
+
+    # Assign participants
+    client.post("/assign")  # This populates pending_assignments
+
+    # Get the token from pending_assignments
+    token = list(pending_assignments.keys())[0]
+
+    # Confirm assignments
+    response = client.get(f"/confirm/{token}", follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Secret Santa assignments have been sent!" in response.data
+
+    # Verify participants are cleared but assignments remain
+    assert len(game.participants) == 0  # Participants should be cleared
+    assert len(game.participant_emails) == 0  # Participant emails should be cleared
+    assert len(game.assignments) == 2  # Assignments should remain
