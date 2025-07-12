@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v0.7.0 (2025-07-12)
+
+### Bug Fixes
+
+- Impove docs consistency
+  ([`3c0b90a`](https://github.com/Kugeleis/wichteln/commit/3c0b90a6924dd882546cbfc00f38199357e0ffc6))
+
+### Features
+
+- Update participant input section to clarify admin role and prompt for name and email
+  ([`f9ad42b`](https://github.com/Kugeleis/wichteln/commit/f9ad42b043bd65944ed515f32ece10c93440d9df))
+
+
 ## v0.6.0 (2025-07-12)
 
 ### Features
