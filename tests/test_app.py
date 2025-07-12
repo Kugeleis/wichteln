@@ -3,8 +3,14 @@ This module contains tests for the Flask application.
 """
 
 import pytest
-from app import app, game, pending_assignments
 from unittest.mock import patch
+from tests.test_helpers import create_test_app
+
+# Create a separate game and pending_assignments for testing
+from src.wichteln.main import SecretSanta
+
+game = SecretSanta()
+pending_assignments: dict[str, dict[str, str]] = {}
 
 
 @pytest.fixture
@@ -12,12 +18,10 @@ def client():
     """
     Creates a test client for the Flask application.
     """
-    app.config["TESTING"] = True
-    app.config["MAIL_SUPPRESS_SEND"] = (
-        True  # Suppress actual email sending during tests
-    )
-    with app.test_client() as client:
-        with app.app_context():
+    # Create test app with our test instances
+    test_app = create_test_app(game, pending_assignments)
+    with test_app.test_client() as client:
+        with test_app.app_context():
             yield client
 
 
