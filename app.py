@@ -37,10 +37,20 @@ print(f"   Status: {status['status_message']}")
 if status.get("web_ui"):
     print(f"   🌐 Web UI: {status['web_ui']}")
 
-# Try to start Mailpit if in development and not available
-if not mail_service.is_available() and isinstance(mail_service, MailpitMailService):
+# Try to start Mailpit if in development and using SMTP fallback
+if MailServiceFactory._is_development_mode() and not isinstance(
+    mail_service, MailpitMailService
+):
     print("🚀 Attempting to start Mailpit...")
-    MailServiceFactory.start_mailpit("./mailpit/mailpit.exe")
+    if MailServiceFactory.start_mailpit("./mailpit/mailpit.exe"):
+        # Recreate mail service to use Mailpit now that it's running
+        print("🔄 Switching to Mailpit service...")
+        mail_service = MailServiceFactory.create_mail_service(app)
+        status = mail_service.get_status()
+        print(f"📧 Mail Service: {status['service']} ({status['type']})")
+        print(f"   Status: {status['status_message']}")
+        if status.get("web_ui"):
+            print(f"   🌐 Web UI: {status['web_ui']}")
 
 pending_assignments: dict[str, dict[str, str]] = {}
 
@@ -286,7 +296,7 @@ def confirm_assignments(token: str) -> Response:
     Flash messages indicate success or failure.
 
     Returns:
-        str: A redirect to the results page.
+        str: A redirect to the index page.
     """
     # Validate token format first
     token_data, validation_errors = validate_form_data(
@@ -315,18 +325,7 @@ You are the Secret Santa for: {receiver}!"""
     else:
         flash("Invalid or expired confirmation link.", "error")
 
-    return redirect(url_for("results"))
-
-
-@app.route("/results")
-def results() -> str:
-    """
-    Renders the results page, displaying the confirmed Secret Santa assignments.
-
-    Returns:
-        str: The rendered HTML content of the results page.
-    """
-    return render_template("results.html", assignments=game.assignments)
+    return redirect(url_for("index"))
 
 
 @app.route("/reset", methods=["POST"])

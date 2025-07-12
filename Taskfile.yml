@@ -15,14 +15,14 @@ tasks:
       - cmd: echo "  USE_MAILPIT true"
       - cmd: echo "  FLASK_DEBUG true"
       - cmd: echo ""
-      - cmd: |
-          if (!(Test-Path "./mailpit/mailpit.exe")) {
-            Write-Host "❌ Mailpit executable not found at ./mailpit/mailpit.exe" -ForegroundColor Red
-            Write-Host "   Please download Mailpit from: https://github.com/axllent/mailpit/releases" -ForegroundColor Yellow
-            exit 1
-          } else {
-            Write-Host "✅ Mailpit executable found" -ForegroundColor Green
-          }
+      - cmd: >
+          powershell -Command
+          "if (Test-Path './mailpit/mailpit.exe')
+          { Write-Host '✅ Mailpit executable found' -ForegroundColor Green }
+          else
+          { Write-Host '❌ Mailpit executable not found at ./mailpit/mailpit.exe' -ForegroundColor Red;
+            Write-Host '   Please download Mailpit from: https://github.com/axllent/mailpit/releases' -ForegroundColor Yellow;
+            exit 1 }"
         platforms: [windows]
       - cmd: echo ""
       - cmd: echo "🚀 Starting application..."

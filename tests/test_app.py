@@ -143,7 +143,7 @@ def test_confirm_assignments(client, mock_send_email, mock_verify_recaptcha):
     token = list(pending_assignments.keys())[0]
 
     response = client.get(f"/confirm/{token}", follow_redirects=True)
-    assert response.status_code == 200  # Redirects to results
+    assert response.status_code == 200  # Redirects to index
     assert not pending_assignments  # Pending assignments should be cleared
     assert mock_send_email.call_count == 3  # 1 confirmation + 2 participant emails
     assert b"Secret Santa assignments have been sent!" in response.data
