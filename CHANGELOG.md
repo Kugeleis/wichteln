@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.4.0 (2025-07-12)
+
+### Features
+
+- Implement duplicate prevention for participants with enhanced validation and user feedback
+  ([`bd34a40`](https://github.com/Kugeleis/wichteln/commit/bd34a40cb0ad5c516f72bd5bbfe9a4f7720b99b1))
+
+
 ## v0.3.1 (2025-07-12)
 
 ### Bug Fixes
