@@ -16,7 +16,15 @@ test:
 update:
 	@echo "Updating dependencies..."
 	@$(UV) pip install -e .
-	@$(UV) pip install -U flask pytest
+	@$(UV) pip install -U flask pytest python-semantic-release pre-commit
+
+pre-commit-install:
+	@echo "Installing pre-commit hooks..."
+	@$(UV) run pre-commit install
+
+release:
+	@echo "Running semantic-release to publish a new version..."
+	@$(UV) run python -m semantic_release publish
 
 publish:
 	@echo "Building distribution..."

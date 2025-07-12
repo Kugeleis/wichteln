@@ -17,7 +17,19 @@ tasks:
     desc: "Updates project dependencies."
     cmds:
       - uv pip install -e .
-      - uv pip install -U flask pytest hatch
+      - uv pip install -U flask pytest hatch python-semantic-release pre-commit
+    silent: false
+
+  pre-commit-install:
+    desc: "Installs pre-commit hooks."
+    cmds:
+      - uv run pre-commit install
+    silent: false
+
+  release:
+    desc: "Runs semantic-release to publish a new version."
+    cmds:
+      - uv run python -m semantic_release publish
     silent: false
 
   publish:
