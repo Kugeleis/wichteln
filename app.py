@@ -10,21 +10,30 @@ import os
 import requests
 
 app = Flask(__name__)
-app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.example.com')
-app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'your-email@example.com')
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'your-email-password')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'your-email@example.com')
+app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER", "smtp.example.com")
+app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", 587))
+app.config["MAIL_USE_TLS"] = os.environ.get("MAIL_USE_TLS", "true").lower() in [
+    "true",
+    "on",
+    "1",
+]
+app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME", "your-email@example.com")
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD", "your-email-password")
+app.config["MAIL_DEFAULT_SENDER"] = os.environ.get(
+    "MAIL_DEFAULT_SENDER", "your-email@example.com"
+)
 
 # Google reCAPTCHA v3 configuration
-app.config['RECAPTCHA_SECRET_KEY'] = os.environ.get('RECAPTCHA_SECRET_KEY', 'YOUR_RECAPTCHA_SECRET_KEY')
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a_very_secret_key')
+app.config["RECAPTCHA_SECRET_KEY"] = os.environ.get(
+    "RECAPTCHA_SECRET_KEY", "YOUR_RECAPTCHA_SECRET_KEY"
+)
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "a_very_secret_key")
 
 mail = Mail(app)
 game = SecretSanta()
 
 pending_assignments: dict[str, dict[str, str]] = {}
+
 
 def send_email(recipient_email: str, subject: str, body: str) -> bool:
     """
@@ -46,6 +55,7 @@ def send_email(recipient_email: str, subject: str, body: str) -> bool:
         print(f"Error sending email: {e}")
         return False
 
+
 def verify_recaptcha(token: str) -> bool:
     """
     Verifies the reCAPTCHA token with Google's reCAPTCHA service.
@@ -56,19 +66,21 @@ def verify_recaptcha(token: str) -> bool:
     Returns:
         bool: True if the reCAPTCHA verification is successful and the score is above the threshold, False otherwise.
     """
-    if app.config['RECAPTCHA_SECRET_KEY'] == 'YOUR_RECAPTCHA_SECRET_KEY':
+    if app.config["RECAPTCHA_SECRET_KEY"] == "YOUR_RECAPTCHA_SECRET_KEY":
         print("WARNING: reCAPTCHA secret key not configured. Skipping verification.")
-        return True # Skip verification if key is not set
+        return True  # Skip verification if key is not set
 
-    payload = {
-        'secret': app.config['RECAPTCHA_SECRET_KEY'],
-        'response': token
-    }
-    response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=payload)
+    payload = {"secret": app.config["RECAPTCHA_SECRET_KEY"], "response": token}
+    response = requests.post(
+        "https://www.google.com/recaptcha/api/siteverify", data=payload, timeout=10
+    )
     result = response.json()
-    return result.get('success', False) and result.get('score', 0) > 0.5 # Adjust score threshold as needed
+    return (
+        result.get("success", False) and result.get("score", 0) > 0.5
+    )  # Adjust score threshold as needed
 
-@app.route('/')
+
+@app.route("/")
 def index() -> str:
     """
     Renders the main page of the Secret Santa application.
@@ -76,9 +88,10 @@ def index() -> str:
     Returns:
         str: The rendered HTML content of the index page.
     """
-    return render_template('index.html', participants=game.participants)
+    return render_template("index.html", participants=game.participants)
 
-@app.route('/add', methods=['POST'])
+
+@app.route("/add", methods=["POST"])
 def add_participant() -> str:
     """
     Adds a participant to the game after reCAPTCHA verification.
@@ -90,19 +103,20 @@ def add_participant() -> str:
     Returns:
         str: A redirect to the index page.
     """
-    name = request.form.get('name')
-    email = request.form.get('email')
-    recaptcha_token = request.form.get('g-recaptcha-response')
+    name = request.form.get("name")
+    email = request.form.get("email")
+    recaptcha_token: str = request.form.get("g-recaptcha-response")
 
     if not verify_recaptcha(recaptcha_token):
-        flash('CAPTCHA verification failed. Please try again.', 'error')
-        return redirect(url_for('index'))
+        flash("CAPTCHA verification failed. Please try again.", "error")
+        return redirect(url_for("index"))
 
     if name and email:
         game.add_participant(name, email)
-    return redirect(url_for('index'))
+    return redirect(url_for("index"))
 
-@app.route('/assign', methods=['POST'])
+
+@app.route("/assign", methods=["POST"])
 def assign_and_send_confirmation() -> str:
     """
     Assigns Secret Santas, stores the assignments temporarily, and sends a confirmation email to the creator.
@@ -115,20 +129,24 @@ def assign_and_send_confirmation() -> str:
         str: A redirect to the index page.
     """
     if len(game.participants) < 2:
-        flash('Need at least two participants to assign Secret Santas.', 'error')
-        return redirect(url_for('index'))
+        flash("Need at least two participants to assign Secret Santas.", "error")
+        return redirect(url_for("index"))
 
     game.assign_santas()
-    
+
     # Generate a unique token for confirmation
     token = str(uuid.uuid4())
-    pending_assignments[token] = game.assignments # Store assignments temporarily
+    pending_assignments[token] = game.assignments  # Store assignments temporarily
 
     # Assuming the first participant added is the creator for now.
     # In a real app, you'd have a dedicated creator input.
-    creator_email = game.participants[0]['email'] if game.participants else app.config['MAIL_DEFAULT_SENDER']
+    creator_email = (
+        game.participants[0]["email"]
+        if game.participants
+        else app.config["MAIL_DEFAULT_SENDER"]
+    )
 
-    confirmation_link = url_for('confirm_assignments', token=token, _external=True)
+    confirmation_link = url_for("confirm_assignments", token=token, _external=True)
     subject = "Confirm Secret Santa Assignments"
     body = f"""Hello,
 
@@ -137,13 +155,20 @@ Please click the following link to confirm and send out the Secret Santa assignm
 This link will expire after one use or if the game is reset."""
 
     if send_email(creator_email, subject, body):
-        flash(f'Confirmation email sent to {creator_email}. Please check your inbox to finalize assignments.', 'info')
+        flash(
+            f"Confirmation email sent to {creator_email}. Please check your inbox to finalize assignments.",
+            "info",
+        )
     else:
-        flash('Failed to send confirmation email. Please check your mail server configuration.', 'error')
-    
-    return redirect(url_for('index'))
+        flash(
+            "Failed to send confirmation email. Please check your mail server configuration.",
+            "error",
+        )
 
-@app.route('/confirm/<token>')
+    return redirect(url_for("index"))
+
+
+@app.route("/confirm/<token>")
 def confirm_assignments(token: str) -> str:
     """
     Confirms the Secret Santa assignments and sends out the assignment emails to participants.
@@ -158,7 +183,7 @@ def confirm_assignments(token: str) -> str:
     Returns:
         str: A redirect to the results page.
     """
-    assignments_to_send = pending_assignments.pop(token, None) # Retrieve and remove
+    assignments_to_send = pending_assignments.pop(token, None)  # Retrieve and remove
 
     if assignments_to_send:
         for giver, receiver in assignments_to_send.items():
@@ -169,14 +194,17 @@ def confirm_assignments(token: str) -> str:
 
 You are the Secret Santa for: {receiver}!"""
                 send_email(giver_email, subject, body)
-        flash('Secret Santa assignments have been sent!', 'success')
-        game.assignments = assignments_to_send # Update game's assignments after sending
+        flash("Secret Santa assignments have been sent!", "success")
+        game.assignments = (
+            assignments_to_send  # Update game's assignments after sending
+        )
     else:
-        flash('Invalid or expired confirmation link.', 'error')
-    
-    return redirect(url_for('results'))
+        flash("Invalid or expired confirmation link.", "error")
 
-@app.route('/results')
+    return redirect(url_for("results"))
+
+
+@app.route("/results")
 def results() -> str:
     """
     Renders the results page, displaying the confirmed Secret Santa assignments.
@@ -184,9 +212,10 @@ def results() -> str:
     Returns:
         str: The rendered HTML content of the results page.
     """
-    return render_template('results.html', assignments=game.assignments)
+    return render_template("results.html", assignments=game.assignments)
 
-@app.route('/reset', methods=['POST'])
+
+@app.route("/reset", methods=["POST"])
 def reset() -> str:
     """
     Resets the game to its initial state, clearing all participants, assignments, and pending assignments.
@@ -195,10 +224,13 @@ def reset() -> str:
         str: A redirect to the index page.
     """
     game.reset()
-    pending_assignments.clear() # Clear pending assignments on reset
-    flash('Game has been reset.', 'info')
-    return redirect(url_for('index'))
+    pending_assignments.clear()  # Clear pending assignments on reset
+    flash("Game has been reset.", "info")
+    return redirect(url_for("index"))
 
-if __name__ == '__main__':
-    app.run(debug=True)
+
+if __name__ == "__main__":
+    # Only enable debug mode in development environment
+    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() in ["true", "on", "1"]
+    app.run(debug=debug_mode)
 # This is a test comment for automated versioning.

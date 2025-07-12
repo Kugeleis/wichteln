@@ -3,7 +3,7 @@ This module contains the core logic for the Secret Santa application.
 """
 
 import random
-from typing import Any
+
 
 class SecretSanta:
     """
@@ -13,7 +13,7 @@ class SecretSanta:
     def __init__(self) -> None:
         """
         Initializes a new Secret Santa game.
-        
+
         Attributes:
             participants (list[dict[str, str]]): A list of dictionaries, where each dictionary represents a participant
                                                 and contains their 'name' and 'email'.
@@ -32,8 +32,13 @@ class SecretSanta:
             name (str): The name of the participant to add.
             email (str): The email address of the participant.
         """
-        if name and email and name not in self.participant_emails and email not in self.participant_emails.values():
-            self.participants.append({'name': name, 'email': email})
+        if (
+            name
+            and email
+            and name not in self.participant_emails
+            and email not in self.participant_emails.values()
+        ):
+            self.participants.append({"name": name, "email": email})
             self.participant_emails[name] = email
 
     def assign_santas(self) -> None:
@@ -46,7 +51,7 @@ class SecretSanta:
             return
 
         # Extract only names for shuffling
-        participant_names = [p['name'] for p in self.participants]
+        participant_names = [p["name"] for p in self.participants]
         shuffled_participants = random.sample(participant_names, len(participant_names))
 
         self.assignments = {
