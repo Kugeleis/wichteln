@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v0.3.1 (2025-07-12)
+
+### Bug Fixes
+
+- Add debug logging for participant management and reCAPTCHA handling
+  ([`ed0ccdf`](https://github.com/Kugeleis/wichteln/commit/ed0ccdfe32a28ae2648e60476d3a430cdcde044d))
+
+### Features
+
+- Add version bump tasks for semantic-release in Makefile and Taskfile
+  ([`2900668`](https://github.com/Kugeleis/wichteln/commit/2900668e9965dbeea672c65bafd557029658b2c8))
+
+
 ## v0.3.0 (2025-07-12)
 
 ### Chores
