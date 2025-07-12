@@ -1,0 +1,38 @@
+version: '3'
+
+tasks:
+  run:
+    desc: "Starts the Flask development server."
+    cmds:
+      - uv run python app.py
+    silent: false
+
+  test:
+    desc: "Runs all project tests using pytest."
+    cmds:
+      - uv run python -m pytest
+    silent: false
+
+  update:
+    desc: "Updates project dependencies."
+    cmds:
+      - uv pip install -e .
+      - uv pip install -U flask pytest hatch
+    silent: false
+
+  publish:
+    desc: "Builds the project distribution."
+    cmds:
+      - uv run hatch build
+      - echo "To publish, you would typically use 'hatch publish' or 'twine upload dist/*'"
+    silent: false
+
+  clean:
+    desc: "Cleans up build artifacts and cache."
+    cmds:
+      - rmdir /s /q dist || true
+      - rmdir /s /q .pytest_cache || true
+      - rmdir /s /q __pycache__ || true
+      - del /s /q *.pyc || true
+      - for /d %%i in (*.egg-info) do rmdir /s /q "%%i" || true
+    silent: false
