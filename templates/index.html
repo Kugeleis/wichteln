@@ -67,7 +67,12 @@
 
         <div class="row">
             <div class="col-md-6">
-                <h2>Add Participant</h2>
+                {% if participants|length == 0 %}
+                    <h2>Enter your name and email</h2>
+                    <p class="text-muted">You will be the administrator of this Secret Santa game.</p>
+                {% else %}
+                    <h2>Add Participant</h2>
+                {% endif %}
                 <form action="/add" method="post">
                     <div class="form-group">
                         <input type="text" name="name" class="form-control" placeholder="Enter name" required>
