@@ -10,6 +10,7 @@ dependencies = [
     "flask-mail>=0.10.0",
     "hatch",
     "pydantic[email]>=2.11.7",
+    "toml>=0.10.2",
 ]
 
 [project.scripts]
