@@ -1,0 +1,10 @@
+repos:
+  - repo: local
+    hooks:
+      - id: semantic-release-version
+        name: Semantic Release Version
+        entry: uv run python -m semantic_release version
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true

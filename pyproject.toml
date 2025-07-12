@@ -23,4 +23,12 @@ build-backend = "hatchling.build"
 dev = [
     "ipykernel>=6.29.5",
     "ruff>=0.12.3",
+    "python-semantic-release",
+    "pre-commit",
 ]
+
+[tool.semantic_release]
+branch = "main"
+version_source = "tag"
+commit_message = "chore(release): {version}"
+tag_format = "v{version}"
