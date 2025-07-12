@@ -3,7 +3,7 @@ This module contains the core logic for the Secret Santa application.
 """
 
 import random
-from typing import List, Dict
+from typing import Any
 
 class SecretSanta:
     """
@@ -13,18 +13,24 @@ class SecretSanta:
     def __init__(self) -> None:
         """
         Initializes a new Secret Santa game.
+        
+        Attributes:
+            participants (list[dict[str, str]]): A list of dictionaries, where each dictionary represents a participant
+                                                and contains their 'name' and 'email'.
+            participant_emails (dict[str, str]): A dictionary mapping participant names to their email addresses.
+            assignments (dict[str, str]): A dictionary mapping giver names to receiver names after assignments are made.
         """
-        self.participants: List[Dict[str, str]] = []
-        self.participant_emails: Dict[str, str] = {}
-        self.assignments: Dict[str, str] = {}
+        self.participants: list[dict[str, str]] = []
+        self.participant_emails: dict[str, str] = {}
+        self.assignments: dict[str, str] = {}
 
     def add_participant(self, name: str, email: str) -> None:
         """
-        Adds a participant to the game.
+        Adds a participant to the game if the name and email are valid and not already present.
 
         Args:
-            name: The name of the participant to add.
-            email: The email address of the participant.
+            name (str): The name of the participant to add.
+            email (str): The email address of the participant.
         """
         if name and email and name not in self.participant_emails and email not in self.participant_emails.values():
             self.participants.append({'name': name, 'email': email})
@@ -32,7 +38,9 @@ class SecretSanta:
 
     def assign_santas(self) -> None:
         """
-        Assigns Secret Santas to all participants.
+        Assigns Secret Santas to all participants. Each participant is assigned to a different person.
+        Assignments are stored in the `assignments` attribute.
+        If there are fewer than two participants, no assignments are made.
         """
         if len(self.participants) < 2:
             return
@@ -48,7 +56,7 @@ class SecretSanta:
 
     def reset(self) -> None:
         """
-        Resets the game to its initial state.
+        Resets the game to its initial state, clearing all participants and assignments.
         """
         self.participants = []
         self.assignments = {}
