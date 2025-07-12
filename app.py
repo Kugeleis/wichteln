@@ -4,31 +4,19 @@ This module contains the Flask application for the Secret Santa web interface.
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.wrappers import Response
-from flask_mail import Mail, Message
 from src.wichteln.main import SecretSanta
 from src.wichteln.forms import (
     ParticipantForm,
     AssignmentConfirmForm,
     validate_form_data,
 )
+from src.mail_service import MailServiceFactory, EmailMessage, MailpitMailService
 from typing import cast
 import uuid
 import os
 import requests
 
 app = Flask(__name__)
-app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER", "smtp.example.com")
-app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", 587))
-app.config["MAIL_USE_TLS"] = os.environ.get("MAIL_USE_TLS", "true").lower() in [
-    "true",
-    "on",
-    "1",
-]
-app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME", "your-email@example.com")
-app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD", "your-email-password")
-app.config["MAIL_DEFAULT_SENDER"] = os.environ.get(
-    "MAIL_DEFAULT_SENDER", "your-email@example.com"
-)
 
 # Google reCAPTCHA v3 configuration
 app.config["RECAPTCHA_SECRET_KEY"] = os.environ.get(
@@ -36,15 +24,30 @@ app.config["RECAPTCHA_SECRET_KEY"] = os.environ.get(
 )
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "a_very_secret_key")
 
-mail = Mail(app)
+# Initialize mail service using the factory
+mail_service = MailServiceFactory.create_mail_service(app)
+
+# Initialize game
 game = SecretSanta()
+
+# Print mail service status
+status = mail_service.get_status()
+print(f"📧 Mail Service: {status['service']} ({status['type']})")
+print(f"   Status: {status['status_message']}")
+if status.get("web_ui"):
+    print(f"   🌐 Web UI: {status['web_ui']}")
+
+# Try to start Mailpit if in development and not available
+if not mail_service.is_available() and isinstance(mail_service, MailpitMailService):
+    print("🚀 Attempting to start Mailpit...")
+    MailServiceFactory.start_mailpit("./mailpit/mailpit.exe")
 
 pending_assignments: dict[str, dict[str, str]] = {}
 
 
 def send_email(recipient_email: str, subject: str, body: str) -> bool:
     """
-    Sends an email to the specified recipient.
+    Sends an email to the specified recipient using the configured mail service.
 
     Args:
         recipient_email (str): The email address of the recipient.
@@ -55,9 +58,8 @@ def send_email(recipient_email: str, subject: str, body: str) -> bool:
         bool: True if the email was sent successfully, False otherwise.
     """
     try:
-        msg = Message(subject, recipients=[recipient_email], body=body)
-        mail.send(msg)
-        return True
+        message = EmailMessage(recipient=recipient_email, subject=subject, body=body)
+        return mail_service.send_email(message)
     except Exception as e:
         print(f"Error sending email: {e}")
         return False
@@ -102,6 +104,60 @@ def index() -> str:
     for i, p in enumerate(game.participants):
         print(f"DEBUG: Participant {i + 1}: {p['name']} ({p['email']})")
     return render_template("index.html", participants=game.participants)
+
+
+@app.route("/dev/test-email")
+def test_email():
+    """Development route to test email functionality with Mailpit."""
+    # Check if we're in development mode or using Mailpit
+    status = mail_service.get_status()
+    if status["type"] != "development":
+        return "This route is only available in development mode", 404
+
+    try:
+        subject = "🎄 Test Email from Wichteln App"
+        body = f"""Hello from your Wichteln application!
+
+This is a test email to verify that email integration is working correctly.
+
+Configuration:
+- Mail Service: {status["service"]} ({status["type"]})
+- Status: {status["status_message"]}
+- Timestamp: {__import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+
+If you can see this email in Mailpit at http://localhost:8025,
+your email configuration is working perfectly!
+
+Happy Secret Santa organizing! 🎅
+"""
+
+        success = send_email("test@example.com", subject, body)
+
+        if success:
+            return f"""
+            <h2>✅ Test Email Sent Successfully!</h2>
+            <p>Check your emails in Mailpit: <a href="http://localhost:8025" target="_blank">http://localhost:8025</a></p>
+            <p>Email sent to: test@example.com</p>
+            <p>Subject: {subject}</p>
+            <hr>
+            <p><a href="/">← Back to Wichteln</a></p>
+            """
+        else:
+            return """
+            <h2>❌ Email Test Failed</h2>
+            <p>Could not send test email. Check the console for error details.</p>
+            <p>Make sure Mailpit is running on localhost:1025</p>
+            <hr>
+            <p><a href="/">← Back to Wichteln</a></p>
+            """
+    except Exception as e:
+        return f"""
+        <h2>❌ Email Test Error</h2>
+        <p>Error: {str(e)}</p>
+        <p>Make sure Mailpit is running and accessible.</p>
+        <hr>
+        <p><a href="/">← Back to Wichteln</a></p>
+        """
 
 
 @app.route("/add", methods=["POST"])
