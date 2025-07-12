@@ -2,6 +2,38 @@
 
 <!-- version list -->
 
+## v0.5.0 (2025-07-12)
+
+### Chores
+
+- Install mailpit
+  ([`7e4aba6`](https://github.com/Kugeleis/wichteln/commit/7e4aba641ca6ce8c638152d49fe3961859e65361))
+
+### Features
+
+- Add mailpit and coverage files to .gitignore
+  ([`2620e7f`](https://github.com/Kugeleis/wichteln/commit/2620e7fce9f8d990401f21eedc917e060e9749cb))
+
+- Enhance mail service factory and SMTP service with type hints and add comprehensive tests for mail
+  service functionality
+  ([`b9790dd`](https://github.com/Kugeleis/wichteln/commit/b9790ddb79970f38ee9d5fb687520f9c5a7fcbc3))
+
+- Implement mail service module with Mailpit and SMTP support, including factory for service
+  creation and email message handling
+  ([`f4c5c3f`](https://github.com/Kugeleis/wichteln/commit/f4c5c3fbc236d6475762030bd3ffe49ae7279647))
+
+- Implement participant clearing after assignment confirmation to maintain secrecy
+  ([`91d243f`](https://github.com/Kugeleis/wichteln/commit/91d243f3c28f5ace1efb2ba122ccb28712ff83fb))
+
+- Update development setup with Mailpit integration and enhance documentation
+  ([`fa96bfd`](https://github.com/Kugeleis/wichteln/commit/fa96bfd807d570cb8356bb82df9178082623cd03))
+
+### Refactoring
+
+- Streamline Mailpit startup logic and remove results page
+  ([`b112482`](https://github.com/Kugeleis/wichteln/commit/b112482e6dea57291e2fb5e016425f16a223662b))
+
+
 ## v0.4.0 (2025-07-12)
 
 ### Features
