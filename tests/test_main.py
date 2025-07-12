@@ -117,3 +117,28 @@ def test_reset():
     assert not game.participants
     assert not game.assignments
     assert not game.participant_emails
+
+
+def test_reset_clears_all_data():
+    """Test that reset() properly clears all game data."""
+    game = SecretSanta()
+
+    # Add some participants
+    game.add_participant("Alice", "alice@example.com")
+    game.add_participant("Bob", "bob@example.com")
+
+    # Assign participants
+    game.assign_santas()
+
+    # Verify data exists
+    assert len(game.participants) > 0
+    assert len(game.assignments) > 0
+    assert len(game.participant_emails) > 0
+
+    # Reset the game
+    game.reset()
+
+    # Verify all data is cleared
+    assert game.participants == []
+    assert game.assignments == {}
+    assert game.participant_emails == {}
