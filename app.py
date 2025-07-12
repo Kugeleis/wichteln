@@ -98,6 +98,9 @@ def index() -> str:
     Returns:
         str: The rendered HTML content of the index page.
     """
+    print(f"DEBUG: Rendering index with {len(game.participants)} participants")
+    for i, p in enumerate(game.participants):
+        print(f"DEBUG: Participant {i + 1}: {p['name']} ({p['email']})")
     return render_template("index.html", participants=game.participants)
 
 
@@ -143,6 +146,10 @@ def add_participant() -> Response:
 
         # Add participant (now guaranteed to have valid data)
         game.add_participant(participant_form.name, str(participant_form.email))
+        print(
+            f"DEBUG: Added participant {participant_form.name} ({participant_form.email})"
+        )
+        print(f"DEBUG: Total participants now: {len(game.participants)}")
         flash(f"Successfully added {participant_form.name}!", "success")
 
     except Exception as e:

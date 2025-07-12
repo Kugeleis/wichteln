@@ -1397,6 +1397,7 @@ name = "wichteln"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "email-validator" },
     { name = "flask" },
     { name = "flask-mail" },
     { name = "hatch" },
@@ -1414,6 +1415,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "email-validator", specifier = ">=2.2.0" },
     { name = "flask" },
     { name = "flask-mail", specifier = ">=0.10.0" },
     { name = "hatch" },
