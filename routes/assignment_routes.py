@@ -1,81 +1,80 @@
 """
 Assignment and confirmation routes for the Secret Santa application.
+
+Routes refactored to use single responsibility functions for better maintainability.
 """
 
 from flask import Blueprint, redirect, url_for, flash
 from werkzeug.wrappers import Response
 from src.wichteln.forms import AssignmentConfirmForm, validate_form_data
-import uuid
+from services.validators import SecretSantaValidator
+from services.token_manager import TokenManager, UrlGenerator, AssignmentProcessor
+from services.email_templates import EmailAddressValidator
 
 
 def create_assignment_routes(game, email_service, pending_assignments) -> Blueprint:
-    """Create blueprint for assignment and confirmation routes."""
+    """Create blueprint for assignment and confirmation routes using single responsibility functions."""
 
     assignment_bp = Blueprint("assignment", __name__)
+
+    # Initialize single responsibility components
+    token_manager = TokenManager(pending_assignments)
+    assignment_processor = AssignmentProcessor(token_manager, email_service)
 
     @assignment_bp.route("/assign", methods=["POST"])
     def assign_and_send_confirmation() -> Response:
         """
-        Assigns Secret Santas, stores the assignments temporarily, and sends a confirmation email to the creator.
+        Assigns Secret Santas using extracted single responsibility functions.
 
-        If there are fewer than two participants, a flash message is displayed.
-        A unique token is generated and associated with the assignments.
-        A confirmation email with a link containing this token is sent to the creator.
+        Uses validator functions, token management utilities, and email processors
+        to handle the assignment workflow with clear separation of concerns.
 
         Returns:
-            str: A redirect to the index page.
+            Response: A redirect to the index page.
         """
-        if len(game.participants) < 2:
-            flash("Need at least two participants to assign Secret Santas.", "error")
+        # Validation using single responsibility function
+        is_valid, error_msg = SecretSantaValidator.validate_minimum_participants(
+            game.participants
+        )
+        if not is_valid:
+            flash(error_msg, "error")
             return redirect(url_for("main.index"))
 
+        # Generate assignments
         game.assign_santas()
 
-        # Generate a unique token for confirmation
-        token = str(uuid.uuid4())
-        pending_assignments[token] = game.assignments  # Store assignments temporarily
+        # Create pending assignment using single responsibility function
+        token = assignment_processor.create_pending_assignment(game.assignments)
 
-        # Assuming the first participant added is the creator for now.
-        # In a real app, you'd have a dedicated creator input.
-        creator_email = (
-            str(game.participants[0]["email"])
-            if game.participants
-            else "admin@example.com"  # fallback email
+        # Get creator email using single responsibility function
+        creator_email = EmailAddressValidator.get_creator_email(game.participants)
+
+        # Generate confirmation URL using single responsibility function
+        confirmation_url = UrlGenerator.create_confirmation_url(url_for, token)
+
+        # Send confirmation email using single responsibility function
+        success, message = assignment_processor.send_confirmation_email(
+            creator_email, confirmation_url
         )
 
-        confirmation_link = url_for(
-            "assignment.confirm_assignments", token=token, _external=True
-        )
-
-        if email_service.send_confirmation_email(creator_email, confirmation_link):
-            flash(
-                f"Confirmation email sent to {creator_email}. Please check your inbox to finalize assignments.",
-                "info",
-            )
-        else:
-            flash(
-                "Failed to send confirmation email. Please check your mail server configuration.",
-                "error",
-            )
-
+        flash(message, "info" if success else "error")
         return redirect(url_for("main.index"))
 
     @assignment_bp.route("/confirm/<token>")
     def confirm_assignments(token: str) -> Response:
         """
-        Confirms the Secret Santa assignments and sends out the assignment emails to participants.
+        Confirms the Secret Santa assignments using single responsibility functions.
+
+        Uses validation functions and assignment processors to handle
+        the confirmation workflow with clear separation of concerns.
 
         Args:
-            token (str): The unique token received from the confirmation email.
-
-        Retrieves the pending assignments using the token.
-        If the token is valid, assignment emails are sent to each participant.
-        Flash messages indicate success or failure.
+            token: The unique token received from the confirmation email.
 
         Returns:
-            str: A redirect to the index page.
+            Response: A redirect to the index page.
         """
-        # Validate token format first
+        # Validate token format using single responsibility function
         token_data, validation_errors = validate_form_data(
             AssignmentConfirmForm, {"token": token}
         )
@@ -84,39 +83,32 @@ def create_assignment_routes(game, email_service, pending_assignments) -> Bluepr
             flash("Invalid or expired confirmation link.", "error")
             return redirect(url_for("main.index"))
 
-        assignments_to_send = pending_assignments.pop(
-            token, None
-        )  # Retrieve and remove
+        # Process confirmation using single responsibility function
+        success, message, assignments_sent = assignment_processor.process_confirmation(
+            token, game.participant_emails
+        )
 
-        if assignments_to_send:
-            for giver, receiver in assignments_to_send.items():
-                giver_email = game.participant_emails.get(giver)
-                if giver_email:
-                    email_service.send_assignment_email(
-                        str(giver_email), giver, receiver
-                    )
-
-            flash("Secret Santa assignments have been sent!", "success")
-            game.assignments = (
-                assignments_to_send  # Update game's assignments after sending
-            )
-            # Clear participants list after successful assignment sending to maintain secrecy
+        if success and assignments_sent:
+            # Update game state
+            game.assignments = assignments_sent
+            # Clear participants for secrecy
             game.clear_participants()
+            flash(message, "success")
         else:
-            flash("Invalid or expired confirmation link.", "error")
+            flash(message, "error")
 
         return redirect(url_for("main.index"))
 
     @assignment_bp.route("/reset", methods=["POST"])
     def reset() -> Response:
         """
-        Resets the game to its initial state, clearing all participants, assignments, and pending assignments.
+        Resets the game using single responsibility functions.
 
         Returns:
-            str: A redirect to the index page.
+            Response: A redirect to the index page.
         """
         game.reset()
-        pending_assignments.clear()  # Clear pending assignments on reset
+        token_manager.clear_all_tokens()  # Clear pending assignments using single responsibility function
         flash("Game has been reset.", "info")
         return redirect(url_for("main.index"))
 
