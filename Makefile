@@ -1,7 +1,7 @@
 PYTHON := .venv/Scripts/python.exe
 UV := .venv/Scripts/uv.exe
 
-.PHONY: all run test update publish clean
+.PHONY: all run test update publish clean version-minor version-patch
 
 all: run
 
@@ -25,6 +25,14 @@ pre-commit-install:
 release:
 	@echo "Running semantic-release to publish a new version..."
 	@$(UV) run python -m semantic_release publish
+
+version-minor:
+	@echo "Creating a minor version bump..."
+	@$(UV) run semantic-release version --minor --no-vcs-release
+
+version-patch:
+	@echo "Creating a patch version bump..."
+	@$(UV) run semantic-release version --patch --no-vcs-release
 
 publish:
 	@echo "Building distribution..."

@@ -32,6 +32,18 @@ tasks:
       - uv run python -m semantic_release publish
     silent: false
 
+  version-minor:
+    desc: "Creates a minor version bump."
+    cmds:
+      - uv run semantic-release version --minor --no-vcs-release
+    silent: false
+
+  version-patch:
+    desc: "Creates a patch version bump."
+    cmds:
+      - uv run semantic-release version --patch --no-vcs-release
+    silent: false
+
   publish:
     desc: "Builds the project distribution."
     cmds:
