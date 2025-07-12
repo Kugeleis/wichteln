@@ -1,0 +1,54 @@
+# Single Point of Truth Configuration
+# This file contains all repeated documentation content
+
+project:
+  name: "Secret Santa Application"
+  description: "A modern Flask application for organizing Secret Santa events"
+  repository: "https://github.com/Kugeleis/wichteln.git"
+  python_version: "3.12"
+  homepage: "http://localhost:5000"
+
+prerequisites:
+  - "Python 3.12 or higher"
+  - "UV package manager (recommended) or pip"
+  - "Git for version control"
+
+installation:
+  uv:
+    - "git clone https://github.com/Kugeleis/wichteln.git"
+    - "cd wichteln"
+    - "uv sync"
+    - "task dev"
+  pip:
+    - "git clone https://github.com/Kugeleis/wichteln.git"
+    - "cd wichteln"
+    - "python -m venv venv"
+    - "source venv/bin/activate  # On Windows: venv\\Scripts\\activate"
+    - "pip install -r requirements.txt"
+    - "task dev"
+
+commands:
+  task:
+    - command: "task dev"
+      description: "Start development server"
+    - command: "task test"
+      description: "Run tests"
+    - command: "task docs"
+      description: "Generate and build documentation"
+    - command: "task docs-serve"
+      description: "Start documentation server"
+    - command: "task clean"
+      description: "Clean build artifacts"
+  make:
+    - command: "make dev"
+      description: "Start development server"
+    - command: "make test"
+      description: "Run tests"
+    - command: "make docs"
+      description: "Generate and build documentation"
+
+platform_notes:
+  windows: "Use `task` commands (requires [Task](https://taskfile.dev/installation/))"
+  linux_macos: "Use either `task` or `make` commands"
+  task_benefits: "Task provides better Windows support and consistent behavior across platforms"
+  make_availability: "Make is built into Linux/macOS but requires additional setup on Windows"

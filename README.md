@@ -28,11 +28,16 @@ cd wichteln
 # Install dependencies
 uv sync
 
-# Run the application
-uv run python app.py
+# Start the development server
+task dev
 ```
 
 🌐 **Open your browser to**: `http://localhost:5000`
+
+> **💡 Platform Notes**:
+> - **Windows**: Use `task` commands (requires [Task](https://taskfile.dev/installation/))
+> - **Linux/macOS**: Use `make` commands (built-in) or install Task
+> - **Cross-platform**: Task works everywhere and provides better Windows support
 
 ## 🚀 Features
 
@@ -59,17 +64,19 @@ For detailed setup, configuration, and deployment instructions, visit our compre
 ### Available Commands
 ```bash
 # Development server
-task dev
+task dev           # Windows: task dev | Linux/macOS: make dev
 
 # Run tests
-task test
+task test          # Windows: task test | Linux/macOS: make test
 
 # Generate documentation
-task docs
+task docs          # Windows: task docs | Linux/macOS: make docs
 
 # View documentation locally
-task docs-serve
+task docs-serve    # Windows: task docs-serve | Linux/macOS: make docs-serve
 ```
+
+> **💡 Command Reference**: Use `task --list` (Windows) or `make help` (Linux/macOS) to see all available commands.
 
 ### Technology Stack
 - **Backend**: Flask (Python web framework)
@@ -93,10 +100,11 @@ This project is open source. See the license file for details.
 ## 🎉 Getting Started
 
 1. **Clone and install** (see Quick Installation above)
-2. **Configure email settings** (optional - see [Configuration Guide](docs/guide/configuration.md))
-3. **Add participants** via the web interface
-4. **Generate assignments** with one click
-5. **Send notifications** to all participants automatically
+2. **Start the development server** with `task dev`
+3. **Configure email settings** (optional - see [Configuration Guide](docs/guide/configuration.md))
+4. **Add participants** via the web interface
+5. **Generate assignments** with one click
+6. **Send notifications** to all participants automatically
 
 Ready to organize your next Secret Santa event? [Get started now!](docs/guide/quickstart.md)
 

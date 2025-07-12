@@ -91,6 +91,7 @@ tasks:
 
   docs-generate:
     desc: "Generates API documentation from source code."
+    deps: [update-includes]
     cmds:
       - echo "Generating API documentation..."
       - uv run python scripts/generate_docs.py
@@ -125,4 +126,10 @@ tasks:
       - task: docs-build
       - echo "Documentation built successfully!"
       - echo "View at ./site/index.html"
+    silent: false
+
+  update-includes:
+    desc: "Update documentation includes from single point of truth."
+    cmds:
+      - uv run python scripts/update_includes.py
     silent: false

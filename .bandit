@@ -1,0 +1,11 @@
+[bandit]
+# Bandit configuration file for security scanning
+
+# Exclude test directories
+exclude_dirs = tests,test
+
+# Set confidence level (high = fewer false positives)
+confidence = high
+
+# Set severity level
+severity = medium

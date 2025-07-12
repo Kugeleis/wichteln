@@ -8,6 +8,20 @@ automatically processed by mkdocstrings to generate comprehensive API documentat
 from pathlib import Path
 from typing import Any
 import ast
+import sys
+
+
+def get_python_version() -> str:
+    """Get Python version from content configuration."""
+    try:
+        # Add the docs/_config directory to Python path
+        config_dir = Path(__file__).parent.parent / "docs" / "_config"
+        sys.path.insert(0, str(config_dir))
+        from content import PYTHON_VERSION
+
+        return PYTHON_VERSION
+    except ImportError:
+        return "3.12"  # fallback
 
 
 def get_module_info(module_path: Path) -> dict[str, Any]:
@@ -175,15 +189,18 @@ def generate_guide_docs() -> None:
     guide_dir = Path("docs/guide")
     guide_dir.mkdir(parents=True, exist_ok=True)
 
+    # Get dynamic Python version
+    python_version = get_python_version()
+
     # Quick Start Guide
     with open(guide_dir / "quickstart.md", "w", encoding="utf-8") as f:
-        f.write("""# Quick Start Guide
+        f.write(f"""# Quick Start Guide
 
 Get up and running with the Secret Santa application in minutes.
 
 ## Prerequisites
 
-- Python 3.12 or higher
+- Python {python_version} or higher
 - UV package manager (recommended) or pip
 
 ## Installation
@@ -198,8 +215,8 @@ cd wichteln
 # Install dependencies
 uv sync
 
-# Run the application
-uv run python app.py
+# Start the development server
+task dev
 ```
 
 ### Using Pip
@@ -216,15 +233,15 @@ source venv/bin/activate  # On Windows: venv\\Scripts\\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the application
-python app.py
+# Start the development server
+task dev
 ```
 
 ## Basic Usage
 
 1. **Start the Application**
    ```bash
-   uv run python app.py
+   task dev
    ```
 
 2. **Open Your Browser**
@@ -323,7 +340,7 @@ Configure logging levels in `services/debug_logger.py` for different environment
 
     # Deployment Guide
     with open(guide_dir / "deployment.md", "w", encoding="utf-8") as f:
-        f.write("""# Deployment Guide
+        content = """# Deployment Guide
 
 Deploy the Secret Santa application to production.
 
@@ -343,7 +360,7 @@ Deploy the Secret Santa application to production.
 Create a `Dockerfile`:
 
 ```dockerfile
-FROM python:3.12-slim
+FROM python:{python_version}-slim
 
 WORKDIR /app
 COPY . .
@@ -394,16 +411,16 @@ docker run -p 5000:5000 --env-file .env secret-santa
 
 3. **Configure Nginx**
    ```nginx
-   server {
+   server {{
        listen 80;
        server_name your-domain.com;
 
-       location / {
+       location / {{
            proxy_pass http://127.0.0.1:5000;
            proxy_set_header Host $host;
            proxy_set_header X-Real-IP $remote_addr;
-       }
-   }
+       }}
+   }}
    ```
 
 4. **Setup Systemd Service**
@@ -443,7 +460,7 @@ Add a health check endpoint:
 ```python
 @app.route('/health')
 def health_check():
-    return {'status': 'healthy', 'version': '1.0.0'}
+    return {{'status': 'healthy', 'version': '1.0.0'}}
 ```
 
 ## Security Considerations
@@ -453,7 +470,8 @@ def health_check():
 - Implement rate limiting
 - Regular security updates
 - Monitor for suspicious activity
-""")
+""".format(python_version=python_version)  # nosec B608 # Documentation content, not SQL
+        f.write(content)
 
 
 def main():

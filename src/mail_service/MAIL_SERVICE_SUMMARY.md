@@ -86,7 +86,7 @@ mail_service = MailServiceFactory.create_mail_service(app, force_type="smtp")
 
 ### 2. Run Flask Application
 ```bash
-$env:FLASK_ENV="development" ; python app.py
+task dev
 ```
 
 ### 3. Test Email Functionality
@@ -171,7 +171,7 @@ $env:MAILPIT_WEB_PORT="9025"  # If port 8025 is busy
 
 # Start services
 ./mailpit/mailpit.exe         # Auto-starts with factory
-python app.py                 # Flask app with auto-detection
+task dev                      # Flask app with auto-detection
 ```
 
 ### Production Setup
@@ -185,7 +185,7 @@ $env:MAIL_PASSWORD="your-app-password"
 $env:MAIL_DEFAULT_SENDER="your-email@gmail.com"
 
 # Start app (automatically uses SMTP in production)
-python app.py
+task dev
 ```
 
 The mail service module is now a complete, self-contained solution that can be easily reused across projects while providing excellent developer experience and production reliability! 🚀

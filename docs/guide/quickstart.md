@@ -19,8 +19,8 @@ cd wichteln
 # Install dependencies
 uv sync
 
-# Run the application
-uv run python app.py
+# Start the development server
+task dev
 ```
 
 ### Using Pip
@@ -37,15 +37,15 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the application
-python app.py
+# Start the development server
+task dev
 ```
 
 ## Basic Usage
 
 1. **Start the Application**
    ```bash
-   uv run python app.py
+   task dev
    ```
 
 2. **Open Your Browser**

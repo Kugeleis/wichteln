@@ -75,6 +75,7 @@ nav:
   - Development:
     - Setup: DEVELOPMENT_SETUP.md
     - Testing: SINGLE_RESPONSIBILITY_TEST_ORGANIZATION.md
+    - Documentation Strategy: SINGLE_POINT_OF_TRUTH_STRATEGY.md
     - Contributing: CONTRIBUTING.md
   - Changelog: CHANGELOG.md
 

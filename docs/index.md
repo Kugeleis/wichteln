@@ -37,9 +37,9 @@ A modern Flask web application for organizing Secret Santa events with participa
    # Edit .env with your settings
    ```
 
-3. **Run the Application**
+3. **Start the Development Server**
    ```bash
-   uv run python app.py
+   task dev
    ```
 
 4. **Access the Web Interface**

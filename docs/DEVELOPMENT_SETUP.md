@@ -38,8 +38,10 @@ start_dev.bat
 $env:FLASK_ENV="development"
 $env:USE_MAILPIT="true"
 $env:FLASK_DEBUG="true"
-python app.py
+task dev
 ```
+
+> **💡 Preferred**: Use `task dev` which automatically sets all environment variables and starts the development server with proper configuration.
 
 ## Accessing the Application
 
