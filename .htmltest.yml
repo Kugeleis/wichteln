@@ -1,0 +1,29 @@
+DirectoryPath: "site"
+CheckDoctype: false
+CheckAnchors: true
+CheckLinks: true
+CheckImages: true
+CheckScripts: false
+CheckFavicon: false
+CheckMetaRefresh: false
+EnforceHTTPS: false
+IgnoreDirectoryMissingTrailingSlash: true
+IgnoreCanonicalBrokenLinks: true
+IgnoreEmptyHref: true
+IgnoreInternalEmptyHash: true
+IgnoreTel: true
+IgnoreMailto: true
+
+IgnoreURLs:
+  - "http://localhost"
+  - "http://127.0.0.1"
+  - "https://localhost"
+  - "https://127.0.0.1"
+  - "mailto:"
+  - "tel:"
+
+# Ignore certain patterns that might be placeholders
+IgnorePatterns:
+  - "your-.*"
+  - "example\\.com"
+  - "yourdomain\\.com"

@@ -76,6 +76,7 @@ nav:
     - Setup: DEVELOPMENT_SETUP.md
     - Testing: SINGLE_RESPONSIBILITY_TEST_ORGANIZATION.md
     - Documentation Strategy: SINGLE_POINT_OF_TRUTH_STRATEGY.md
+    - GitHub Pages Deployment: GITHUB_PAGES_DEPLOYMENT.md
     - Contributing: CONTRIBUTING.md
   - Changelog: CHANGELOG.md
 

@@ -1,6 +1,15 @@
 # 🎄 Secret Santa Application (Wichteln)
 
+[![Documentation](https://github.com/Kugeleis/wichteln/actions/workflows/docs.yml/badge.svg)](https://github.com/Kugeleis/wichteln/actions/workflows/docs.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![UV](https://img.shields.io/badge/package_manager-UV-blue.svg)](https://github.com/astral-sh/uv)
+
 A modern Flask web application for organizing Secret Santa events with participant management, automatic assignment generation, and email notifications.
+
+## 🚀 Live Documentation
+
+📚 **[View Documentation](https://kugeleis.github.io/wichteln/)** - Automatically updated from this repository
 
 ## 🎯 Purpose
 
@@ -93,7 +102,26 @@ Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) 
 - Testing requirements
 - Pull request process
 
-## 📄 License
+## � Continuous Integration
+
+This project uses GitHub Actions for automated:
+
+- **📚 Documentation Building**: Automatic generation and deployment to GitHub Pages
+- **🧪 Quality Checks**: Pre-commit hooks, linting, formatting, and security scanning
+- **🔍 Link Validation**: Documentation link checking (non-blocking)
+- **📦 Dependency Management**: UV package manager with intelligent caching
+
+### CI/CD Features
+
+- ✅ **Automatic deployment** on push to main/master
+- ✅ **PR preview builds** with 7-day retention
+- ✅ **Path-based triggering** (only runs when relevant files change)
+- ✅ **Parallel job execution** for faster feedback
+- ✅ **Smart caching** for improved performance
+
+[📖 Learn more about GitHub Pages deployment](docs/GITHUB_PAGES_DEPLOYMENT.md)
+
+## �📄 License
 
 This project is open source. See the license file for details.
 
