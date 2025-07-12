@@ -24,7 +24,7 @@ class MailServiceFactory:
 
     @staticmethod
     def create_mail_service(
-        app: Optional[Flask] = None, force_type: Optional[str] = None, **config
+        app: Optional[Flask] = None, force_type: Optional[str] = None, **config: Any
     ) -> MailProtocol:
         """
         Create appropriate mail service based on environment and availability.
@@ -59,7 +59,7 @@ class MailServiceFactory:
             return MailServiceFactory._create_smtp_service(app, **config)
 
     @staticmethod
-    def _create_mailpit_service(**config) -> MailpitMailService:
+    def _create_mailpit_service(**config: Any) -> MailpitMailService:
         """
         Create Mailpit mail service.
 
@@ -84,7 +84,9 @@ class MailServiceFactory:
         )
 
     @staticmethod
-    def _create_smtp_service(app: Optional[Flask] = None, **config) -> SMTPMailService:
+    def _create_smtp_service(
+        app: Optional[Flask] = None, **config: Any
+    ) -> SMTPMailService:
         """
         Create SMTP mail service.
 
@@ -231,3 +233,24 @@ class MailServiceFactory:
         except Exception as e:
             print(f"❌ Failed to start Mailpit: {e}")
             return False
+
+    def get_service(
+        self,
+        app: Optional[Flask] = None,
+        force_type: Optional[str] = None,
+        **config: Any,
+    ) -> MailProtocol:
+        """
+        Get appropriate mail service instance.
+
+        This is a convenience instance method that delegates to the static create_mail_service method.
+
+        Args:
+            app: Flask application instance (optional)
+            force_type: Force specific service type ("mailpit" or "smtp")
+            **config: Additional configuration parameters
+
+        Returns:
+            MailProtocol: Appropriate mail service instance
+        """
+        return self.create_mail_service(app=app, force_type=force_type, **config)

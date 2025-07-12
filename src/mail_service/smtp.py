@@ -20,7 +20,7 @@ class SMTPMailService(MailProtocol):
     such as Gmail, Outlook, SendGrid, etc. Suitable for production use.
     """
 
-    def __init__(self, app: Optional[Flask] = None, **config):
+    def __init__(self, app: Optional[Flask] = None, **config: Any) -> None:
         """
         Initialize SMTP mail service.
 
@@ -57,7 +57,7 @@ class SMTPMailService(MailProtocol):
 
         self.mail = Mail(app)
 
-    def _get_config(self, **config) -> dict[str, Any]:
+    def _get_config(self, **config: Any) -> dict[str, Any]:
         """
         Get mail configuration from environment variables or provided config.
 
