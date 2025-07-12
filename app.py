@@ -3,8 +3,15 @@ This module contains the Flask application for the Secret Santa web interface.
 """
 
 from flask import Flask, render_template, request, redirect, url_for, flash
+from werkzeug.wrappers import Response
 from flask_mail import Mail, Message
 from src.wichteln.main import SecretSanta
+from src.wichteln.forms import (
+    ParticipantForm,
+    AssignmentConfirmForm,
+    validate_form_data,
+)
+from typing import cast
 import uuid
 import os
 import requests
@@ -56,16 +63,19 @@ def send_email(recipient_email: str, subject: str, body: str) -> bool:
         return False
 
 
-def verify_recaptcha(token: str) -> bool:
+def verify_recaptcha(token: str | None) -> bool:
     """
     Verifies the reCAPTCHA token with Google's reCAPTCHA service.
 
     Args:
-        token (str): The reCAPTCHA token received from the frontend.
+        token (str | None): The reCAPTCHA token received from the frontend.
 
     Returns:
         bool: True if the reCAPTCHA verification is successful and the score is above the threshold, False otherwise.
     """
+    if not token:
+        return False
+
     if app.config["RECAPTCHA_SECRET_KEY"] == "YOUR_RECAPTCHA_SECRET_KEY":
         print("WARNING: reCAPTCHA secret key not configured. Skipping verification.")
         return True  # Skip verification if key is not set
@@ -92,32 +102,58 @@ def index() -> str:
 
 
 @app.route("/add", methods=["POST"])
-def add_participant() -> str:
+def add_participant() -> Response:
     """
-    Adds a participant to the game after reCAPTCHA verification.
+    Adds a participant to the game after form validation and reCAPTCHA verification.
 
-    Retrieves participant name, email, and reCAPTCHA token from the form submission.
-    If reCAPTCHA verification fails, a flash message is displayed.
-    If name and email are provided, the participant is added to the game.
+    Retrieves and validates participant data from the form submission using Pydantic.
+    If validation or reCAPTCHA verification fails, appropriate flash messages are displayed.
 
     Returns:
-        str: A redirect to the index page.
+        Response: A redirect to the index page.
     """
-    name = request.form.get("name")
-    email = request.form.get("email")
-    recaptcha_token: str = request.form.get("g-recaptcha-response")
+    try:
+        # Create form data dict from request
+        form_data = {
+            "name": request.form.get("name", ""),
+            "email": request.form.get("email", ""),
+            "recaptcha_token": request.form.get("g-recaptcha-response"),
+        }
 
-    if not verify_recaptcha(recaptcha_token):
-        flash("CAPTCHA verification failed. Please try again.", "error")
-        return redirect(url_for("index"))
+        # Validate with Pydantic
+        participant_data, validation_errors = validate_form_data(
+            ParticipantForm, form_data
+        )
 
-    if name and email:
-        game.add_participant(name, email)
+        if validation_errors:
+            flash(f"Invalid input: {'; '.join(validation_errors)}", "error")
+            return redirect(url_for("index"))
+
+        # participant_data is guaranteed to be ParticipantForm instance here
+        if participant_data is None:
+            flash("An unexpected error occurred. Please try again.", "error")
+            return redirect(url_for("index"))
+
+        participant_form = cast(ParticipantForm, participant_data)
+
+        # Verify reCAPTCHA
+        if not verify_recaptcha(participant_form.recaptcha_token):
+            flash("CAPTCHA verification failed. Please try again.", "error")
+            return redirect(url_for("index"))
+
+        # Add participant (now guaranteed to have valid data)
+        game.add_participant(participant_form.name, str(participant_form.email))
+        flash(f"Successfully added {participant_form.name}!", "success")
+
+    except Exception as e:
+        flash("An unexpected error occurred. Please try again.", "error")
+        print(f"Error in add_participant: {e}")
+
     return redirect(url_for("index"))
 
 
 @app.route("/assign", methods=["POST"])
-def assign_and_send_confirmation() -> str:
+def assign_and_send_confirmation() -> Response:
     """
     Assigns Secret Santas, stores the assignments temporarily, and sends a confirmation email to the creator.
 
@@ -169,7 +205,7 @@ This link will expire after one use or if the game is reset."""
 
 
 @app.route("/confirm/<token>")
-def confirm_assignments(token: str) -> str:
+def confirm_assignments(token: str) -> Response:
     """
     Confirms the Secret Santa assignments and sends out the assignment emails to participants.
 
@@ -183,6 +219,15 @@ def confirm_assignments(token: str) -> str:
     Returns:
         str: A redirect to the results page.
     """
+    # Validate token format first
+    token_data, validation_errors = validate_form_data(
+        AssignmentConfirmForm, {"token": token}
+    )
+
+    if validation_errors:
+        flash("Invalid or expired confirmation link.", "error")
+        return redirect(url_for("index"))
+
     assignments_to_send = pending_assignments.pop(token, None)  # Retrieve and remove
 
     if assignments_to_send:
@@ -216,7 +261,7 @@ def results() -> str:
 
 
 @app.route("/reset", methods=["POST"])
-def reset() -> str:
+def reset() -> Response:
     """
     Resets the game to its initial state, clearing all participants, assignments, and pending assignments.
 
