@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.8.0 (2025-07-12)
+
+### Features
+
+- Add gh docs ci
+  ([`643b295`](https://github.com/Kugeleis/wichteln/commit/643b295dce37df911b2da21569f41f11b09a00fc))
+
+
 ## v0.7.1 (2025-07-12)
 
 
