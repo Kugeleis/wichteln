@@ -188,3 +188,56 @@ def test_reset(client, mock_verify_recaptcha):
     assert not game.participants
     assert not pending_assignments
     assert b"Game has been reset." in response.data
+
+
+def test_add_duplicate_participant_flask(client, mock_verify_recaptcha):
+    """
+    Tests that duplicate participants are not added via Flask app and proper error messages are shown.
+    """
+    # Add first participant
+    response1 = client.post(
+        "/add",
+        data={
+            "name": "testuser",
+            "email": "test@example.com",
+            "g-recaptcha-response": "mock_token",
+        },
+        follow_redirects=True,
+    )
+    assert response1.status_code == 200
+    assert b"Successfully added testuser!" in response1.data
+    assert len(game.participants) == 1
+
+    # Try to add participant with same name, different email
+    response2 = client.post(
+        "/add",
+        data={
+            "name": "testuser",
+            "email": "another@example.com",
+            "g-recaptcha-response": "mock_token",
+        },
+        follow_redirects=True,
+    )
+    assert response2.status_code == 200
+    assert (
+        b"A participant with the name &#39;testuser&#39; was already added."
+        in response2.data
+    )
+    assert len(game.participants) == 1  # Should still be 1
+
+    # Try to add participant with different name, same email
+    response3 = client.post(
+        "/add",
+        data={
+            "name": "anotheruser",
+            "email": "test@example.com",
+            "g-recaptcha-response": "mock_token",
+        },
+        follow_redirects=True,
+    )
+    assert response3.status_code == 200
+    assert (
+        b"A participant with the email &#39;test@example.com&#39; was already added."
+        in response3.data
+    )
+    assert len(game.participants) == 1  # Should still be 1

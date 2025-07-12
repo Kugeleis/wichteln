@@ -145,12 +145,18 @@ def add_participant() -> Response:
             return redirect(url_for("index"))
 
         # Add participant (now guaranteed to have valid data)
-        game.add_participant(participant_form.name, str(participant_form.email))
-        print(
-            f"DEBUG: Added participant {participant_form.name} ({participant_form.email})"
+        success, message = game.add_participant(
+            participant_form.name, str(participant_form.email)
         )
-        print(f"DEBUG: Total participants now: {len(game.participants)}")
-        flash(f"Successfully added {participant_form.name}!", "success")
+
+        if success:
+            print(
+                f"DEBUG: Added participant {participant_form.name} ({participant_form.email})"
+            )
+            print(f"DEBUG: Total participants now: {len(game.participants)}")
+            flash(message, "success")
+        else:
+            flash(message, "error")
 
     except Exception as e:
         flash("An unexpected error occurred. Please try again.", "error")

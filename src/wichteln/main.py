@@ -24,22 +24,34 @@ class SecretSanta:
         self.participant_emails: dict[str, str] = {}
         self.assignments: dict[str, str] = {}
 
-    def add_participant(self, name: str, email: str) -> None:
+    def add_participant(self, name: str, email: str) -> tuple[bool, str]:
         """
         Adds a participant to the game if the name and email are valid and not already present.
 
         Args:
             name (str): The name of the participant to add.
             email (str): The email address of the participant.
+
+        Returns:
+            tuple[bool, str]: A tuple containing success status and message.
+                             (True, "Success message") if added successfully,
+                             (False, "Error message") if addition failed.
         """
-        if (
-            name
-            and email
-            and name not in self.participant_emails
-            and email not in self.participant_emails.values()
-        ):
-            self.participants.append({"name": name, "email": email})
-            self.participant_emails[name] = email
+        if not name or not email:
+            return False, "Name and email are required."
+
+        # Check for duplicate name
+        if name in self.participant_emails:
+            return False, f"A participant with the name '{name}' was already added."
+
+        # Check for duplicate email
+        if email in self.participant_emails.values():
+            return False, f"A participant with the email '{email}' was already added."
+
+        # If we get here, both name and email are unique
+        self.participants.append({"name": name, "email": email})
+        self.participant_emails[name] = email
+        return True, f"Successfully added {name}!"
 
     def assign_santas(self) -> None:
         """
